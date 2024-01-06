@@ -143,9 +143,9 @@ const Spectrogram = () => {
 
   return (
     <div>
-      <div className="h1-div">
+      <div className="h1-div flex justify-center items-center flex-col">
         <h1 className="">Sound Recognition</h1>
-        <p className="mb-10 mt-5 text-sm text-[#fff]">
+        <p className=" mt-5 text-sm text-[#fff] w-[90%]">
           This experiment needs access to your microphone. It will then use live
           data to predict your activity based on the classes at the bottom.
         </p>

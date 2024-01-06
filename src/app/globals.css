@@ -24,7 +24,7 @@ h1 {
 }
 .button-div {
   position: absolute;
-  top: 20%;
+  top: 25%;
   left: 0;
   width: 100%;
   text-align: center;
@@ -82,5 +82,8 @@ h1 {
   }
   .button-28 {
     width: 40%;
+  }
+  .button-div {
+    top: 33%;
   }
 }
