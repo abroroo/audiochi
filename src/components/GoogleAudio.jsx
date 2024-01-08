@@ -7,9 +7,9 @@ const GoogleAudio = () => {
 
   async function createModel() {
     const checkpointURL =
-      "https://storage.googleapis.com/tm-model/ooIMg_caM/model.json"; // Model topology URL
+      "https://storage.googleapis.com/tm-model/gkl9L4FLn/model.json"; // Model topology URL
     const metadataURL =
-      "https://storage.googleapis.com/tm-model/ooIMg_caM/metadata.json"; // Model metadata URL
+      "https://storage.googleapis.com/tm-model/gkl9L4FLn/metadata.json"; // Model metadata URL
 
     const newRecognizer = speechCommands.create(
       "BROWSER_FFT", // Fourier transform type
@@ -53,16 +53,23 @@ const GoogleAudio = () => {
   }
 
   return (
-    <div className="text-[#fff] mt-10">
+    <div className="text-[#fff] mt-10 flex items-center justify-center flex-col w-full">
+      <p className="my-5 text-sm text-[#fff] w-[90%]">
+        With a concept of transfer learning. It can also predict your audio
+        activity based on the classes it's trained{" "}
+      </p>
       {!isPredicting ? (
         <button className="button-28" type="button" onClick={startPredictions}>
-          Start Predictions
+          Start Prediction
         </button>
       ) : (
         <button className="button-28" type="button" onClick={stopPredictions}>
           Stop Predictions
         </button>
       )}
+      {/* <p className="mt-5 text-sm text-[#fff] w-[90%]">
+        It is listening in real-time and showing probability by percentage
+      </p> */}
       <div id="label-container" className="mt-10 grid gap-2"></div>
     </div>
   );

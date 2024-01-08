@@ -40,9 +40,11 @@ const Spectrogram = () => {
 
   useEffect(() => {
     if (isMicOn && !stream) {
+      // WebRTC API allows to access user's microphone
       navigator.mediaDevices.getUserMedia({ audio: true }).then((micStream) => {
         setStream(micStream);
 
+        // Web Audio API lets to analyse the received data from mic
         const audioContext = new (window.AudioContext ||
           window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
@@ -145,25 +147,32 @@ const Spectrogram = () => {
     <div>
       <div className="h1-div flex justify-center items-center flex-col">
         <h1 className="">Sound Recognition</h1>
-        <p className=" mt-5 text-sm text-[#fff] w-[90%]">
-          This experiment needs access to your microphone. It will then use live
-          data to predict your activity based on the classes at the bottom.
+        <p className=" m-0 text-sm text-[#fff] w-[90%]">
+          This experiment needs access to your microphone and you to be in
+          quiter place.
         </p>
       </div>
-      <div className="button-div">
+      <div className="button-div md:top-[25%] top-[33%] xl:top-[20%] flex items-center justify-center flex-col">
+        <p className=" m-5 text-sm text-[#fff] w-[90%]">
+          It can visualize audio as frequency of sound patterns (more red
+          greater the frequency). To check if it's working you can start with
+          (shshshshs) sound.
+        </p>
         <button className=" button-28 " onClick={toggleMicrophone}>
-          {isMicOn ? "Stop Spectogram" : "Start Spectogram"}
+          {isMicOn ? "Stop Spectogram" : "Visualize Audio"}
         </button>
-        {/* {prediction && (
-          <div className="prediction-div">
-            <h2>Prediction: {prediction}</h2>
-          </div>
-        )} */}
+
         <GoogleAudio />
       </div>
       <div className="canvas-div">
         <canvas ref={canvasRef} />
       </div>
+      <p className="text-xs text-[#646363] absolute bottom-5 w-full  left-0 flex  justify-center">
+        by
+        <a target="_blank" href="https://github.com/abroroo" className="ml-1">
+          abroro
+        </a>
+      </p>
     </div>
   );
 };
