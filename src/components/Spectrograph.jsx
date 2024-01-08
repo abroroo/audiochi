@@ -148,8 +148,8 @@ const Spectrogram = () => {
       <div className="h1-div flex justify-center items-center flex-col">
         <h1 className="">Sound Recognition</h1>
         <p className=" m-0 text-sm text-[#fff] w-[90%]">
-          This experiment needs access to your microphone and you to be in
-          quiter place.
+          This experiment needs access to your microphone and your device to be
+          in quiter place.
         </p>
       </div>
       <div className="button-div md:top-[25%] top-[33%] xl:top-[20%] flex items-center justify-center flex-col">
@@ -159,7 +159,7 @@ const Spectrogram = () => {
           (shshshshs) sound.
         </p>
         <button className=" button-28 " onClick={toggleMicrophone}>
-          {isMicOn ? "Stop Spectogram" : "Visualize Audio"}
+          {isMicOn ? "Stop spectrogram" : "Visualize Audio"}
         </button>
 
         <GoogleAudio />
