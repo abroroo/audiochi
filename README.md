@@ -123,11 +123,17 @@ Following the above mentioned tutorial and ChatGPT, I came up with this function
 
 
 > `rat` calculates a normalized value for the frequency data, ranging from 0 to 1.
+> 
 > `hue`, `sat`, and `lit `determine the color values based on the normalized frequency data. `hue` is the color type. It's expressed as an angle between 0 and 360 degrees, representing different colors.
+> 
 > `ctx.beginPath()` starts a new path for drawing.
+> 
 > `ctx.strokeStyle` sets the color for the current drawing path based on the calculated hue, saturation, and lightness.
+> 
 > `ctx.moveTo()` moves the starting point of the path to the specified coordinates.
+> 
 > `ctx.lineTo()` draws a line from the current drawing position to the specified coordinates.
+> 
 > `ctx.stroke()` actually draws the path on the canvas.
 
 
