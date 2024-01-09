@@ -17,7 +17,7 @@ I learned that TM can be used with TenserFlow.js [models](https://www.tensorflow
 
 I initially planned to use WebSockets to send audio to the backend, and there process it with a TensorFlow's Speech-Commands model, and get real-time outputs. But I ran into a bunch of dependency conflicts. Specifically, the setup for Google Teachable Machine's model didn't align with the Speech-Command set up in node.js
 
-To not get things complicated, I decided to use the Speech Commands' CDN and handle everything on the client side only, which handles audio access by itself. 
+To not make things complicated, I decided to use the Speech Commands' CDN and handle everything on the client side only, which handles audio access by itself. 
 
 There is a good code sample on how to use the model on TM's export page: 
 
