@@ -100,8 +100,36 @@ Following the above mentioned tutorial and ChatGPT, I came up with this function
 
 
 ```
+> `window.requestAnimationFrame(drawSpectrogram)`
+> 
+> This line is calling the drawSpectrogram function recursively. requestAnimationFrame is a built-in browser API that allows you to schedule a function to be called before the next repaint. This provides a smooth and > efficient way to animate elements on the web.
+
+> `let imgData = ctx.getImageData(1, 0, window.innerWidth - 1, window.innerHeight)`
+> 
+> We get the image data, to put it again to the new canvas to create shifting effect to the left.  It starts at the x-coordinate 1 and captures the data up to the canvas's width, and spans the full height of the canvas.
+
+> `ctx.fillRect(0, 0, window.innerWidth, window.innerHeight)`
+>
+> With fillRect() we are clearing rectangle from the previous image by filling it with black color . This ensures the next image we put in here is drawn cleanly.
+
+> `ctx.putImageData(imgData, 0, 0)`
+>
+> After clearing the canvas, this line puts the previously captured image data back onto the canvas, essentially shifting everything to the left by one pixel. This creates a scrolling effect.
+
+> `analyser.getByteFrequencyData(data)`
+>
+>  Method fetches frequency data from the audio signal being analyzed by the Web Audio API's AnalyserNode. The `data` array is a `Uint8Array` that will store the frequency data. This array will hold values ranging > >  from 0 to 255. Then we loop over each number in the `data` array then use it draw spectrogram with canvas methods
+
+> `rat` calculates a normalized value for the frequency data, ranging from 0 to 1.
+> `hue`, `sat`, and `lit `determine the color values based on the normalized frequency data. `hue` is the color type. It's expressed as an angle between 0 and 360 degrees, representing different colors.
+> `ctx.beginPath()` starts a new path for drawing.
+> `ctx.strokeStyle` sets the color for the current drawing path based on the calculated hue, saturation, and lightness.
+> `ctx.moveTo()` moves the starting point of the path to the specified coordinates.
+> `ctx.lineTo()` draws a line from the current drawing position to the specified coordinates.
+> `ctx.stroke()` actually draws the path on the canvas.
 
 
+And that's it, we can add toggle buttons as usual. 
 
 
 
