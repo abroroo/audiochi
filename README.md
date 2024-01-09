@@ -6,13 +6,10 @@ I wanted to make sound recognition model, if possible visualize the audio as wel
 
 With Teachable Machine, you can do [Transfer Learning](https://en.wikipedia.org/wiki/Transfer_learning) which basically allows you to take a pre-trained model (which has already learned a lot from a vast amount of data) and then tweak it for your specific needs.
 
-In this case, I added some audio classes like snap, clap, etc. Teachable Machine requires you to record samples of audio classes you defined, and then it will retrain the model fine tunning the model to recognize your defined classes 
+In this case, I added some audio classes like snap, clap, etc. Teachable Machine fisrt requires you to record background noise , then you can define audio classes and record samples for them.
 
-
-
-
-
-
+Teachable Machine will retrain the model fine tunning it to recognize your defined classes 
+![](https://raw.githubusercontent.com/abroroo/audiochi/main/public/train.png)
 
 ### How to build it with NextJS
 
@@ -25,3 +22,26 @@ I learned that I can achieve this with [WebRTC API](https://developer.mozilla.or
 I initially planned to use WebSockets to send audio to the backend, and there process it with a TensorFlow's Speech-Commands model, and get real-time outputs. But I ran into a bunch of dependency conflicts. Specifically, the setup for Google Teachable Machine's model didn't align with the Speech-Command set up in node.js
 
 To not get things complicated, I decided to use the Speech Commands' CDN and handle everything on the client side only.
+
+There is a good sample of code on how to use the model on Teachable Machine export page: 
+
+![](https://raw.githubusercontent.com/abroroo/audiochi/main/public/export.png)
+
+Once you save trained model to your Google Drive, you can import it, which will give you a link to two necessary files `model.json` and `metadata.json`. You can pass it to Speech Commands `.create()` method:
+```
+
+ const newRecognizer = speechCommands.create(
+      "BROWSER_FFT", // Fourier transform type
+      undefined, // Speech commands vocabulary feature (not needed for your models)
+      checkpointURL,
+      metadataURL
+    );
+
+```
+
+
+
+
+
+
+
