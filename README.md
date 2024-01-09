@@ -118,7 +118,7 @@ Following the above mentioned tutorial and ChatGPT, I came up with this function
 
 > `analyser.getByteFrequencyData(data)`
 >
->  Method fetches frequency data from the audio signal being analyzed by the Web Audio API's AnalyserNode. The `data` array is a `Uint8Array` that will store the frequency data. This array will hold values ranging > >  from 0 to 255. Then we loop over each number in the `data` array then use it draw spectrogram with canvas methods
+>  Method fetches frequency data from the audio signal being analyzed by the Web Audio API's AnalyserNode. The `data` array is a `Uint8Array` that will store the frequency data. This array will hold values ranging > >  from 0 to 255. Then we loop over each number in the `data` array then use it draw spectrogram with canvas methods. Each value in the data array corresponds to a specific frequency band. These values represent the > intensity or magnitude of the respective frequency bands.
 
 > `rat` calculates a normalized value for the frequency data, ranging from 0 to 1.
 > `hue`, `sat`, and `lit `determine the color values based on the normalized frequency data. `hue` is the color type. It's expressed as an angle between 0 and 360 degrees, representing different colors.
