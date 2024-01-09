@@ -4,22 +4,22 @@ I wanted it to try it myself and hopefully deploy it to the web too, and it [wor
 
 I wanted to make sound recognition model, if possible visualize the audio as well.
 
-With Teachable Machine, you can do [Transfer Learning](https://en.wikipedia.org/wiki/Transfer_learning) which basically allows you to take a pre-trained model (which has already learned a lot from a vast amount of data) and then tweak it for your specific needs.
+With Teachable Machine (TM), you can do [Transfer Learning](https://en.wikipedia.org/wiki/Transfer_learning) which basically allows you to take a pre-trained model (which has already learned a lot from a vast amount of data) and then tweak it for your specific needs.
 
-In this case, I added some audio classes like snap, clap, etc. Teachable Machine fisrt requires you to record background noise , then you can define audio classes and record samples for them.
+In this case, I added some audio classes like snap, clap, etc. TM fisrt requires you to record background noise , then you can define audio classes and record samples for them.
 
-Teachable Machine will retrain the model fine tunning it to recognize your defined classes 
+It will retrain the model fine tunning it to recognize your defined classes 
 ![](https://raw.githubusercontent.com/abroroo/audiochi/main/public/train.png)
 
 ### How to build it with NextJS
 
-I learned that Teachable Machine can be used with TenserFlow.js [models](https://www.tensorflow.org/js/models). And threre is only one audio processing model which is [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) 
+I learned that TM can be used with TenserFlow.js [models](https://www.tensorflow.org/js/models). And threre is only one audio processing model which is [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) 
 
 I initially planned to use WebSockets to send audio to the backend, and there process it with a TensorFlow's Speech-Commands model, and get real-time outputs. But I ran into a bunch of dependency conflicts. Specifically, the setup for Google Teachable Machine's model didn't align with the Speech-Command set up in node.js
 
 To not get things complicated, I decided to use the Speech Commands' CDN and handle everything on the client side only, which handles audio access by itself. 
 
-There is a good sample of code on how to use the model on Teachable Machine export page: 
+There is a good code sample on how to use the model on TM's export page: 
 
 ![](https://raw.githubusercontent.com/abroroo/audiochi/main/public/export.png)
 
