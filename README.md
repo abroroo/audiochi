@@ -139,6 +139,9 @@ Following the above mentioned tutorial and ChatGPT, I came up with this function
 
 And that's it, we can add toggle buttons as usual. 
 
+### Further Development Ideas
+
+I need to figure out a better way to use it. Right now, I'm thinking of making it rhyme with rap lyrics based on what it hears. I'll work on it more once I have a clearer plan.
 
 
 
