@@ -141,7 +141,7 @@ And that's it, we can add toggle buttons as usual.
 
 ### Further Development Ideas
 
-I need to figure out a better way to use it. Right now, I'm thinking of making it rhyme with rap lyrics based on what it hears. I'll work on it more once I have a clearer plan.
+I need to figure out a better way to use it. Definetely, it could be a good match with Raspberry Pi boards and use it as home assistant. But for now, I'm thinking of making it rhyme with rap lyrics based on what it hears. I'll work on it more once I have a clearer plan.
 
 
 
