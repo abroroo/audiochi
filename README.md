@@ -102,7 +102,7 @@ Following the above mentioned tutorial and ChatGPT, I came up with this function
 ```
 > `window.requestAnimationFrame(drawSpectrogram)`
 > 
-> This line is calling the drawSpectrogram function recursively. requestAnimationFrame is a built-in browser API that allows you to schedule a function to be called before the next repaint. This provides a smooth and > efficient way to animate elements on the web.
+> This line is calling the `drawSpectrogram` function recursively. `requestAnimationFrame` is a built-in browser API that allows you to schedule a function to be called before the next repaint. This provides a smooth and > efficient way to animate elements on the web.
 
 > `let imgData = ctx.getImageData(1, 0, window.innerWidth - 1, window.innerHeight)`
 > 
@@ -110,7 +110,7 @@ Following the above mentioned tutorial and ChatGPT, I came up with this function
 
 > `ctx.fillRect(0, 0, window.innerWidth, window.innerHeight)`
 >
-> With fillRect() we are clearing rectangle from the previous image by filling it with black color . This ensures the next image we put in here is drawn cleanly.
+> With `fillRect()` we are clearing rectangle from the previous image by filling it with black color . This ensures the next image we put in here is drawn cleanly.
 
 > `ctx.putImageData(imgData, 0, 0)`
 >
