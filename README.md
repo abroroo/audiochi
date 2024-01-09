@@ -52,7 +52,7 @@ Thanks to ChatGPT, I learned that I can achieve this with [WebRTC API](https://d
               });
    ```
 
-Once I had access to the raw audio, I used [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) which helped me convert those sound waves into actionable data points.
+Once I had access to the raw audio, I used [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) which helped me convert those sound waves into actionable data points. 
 
 ```
 
