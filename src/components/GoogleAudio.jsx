@@ -70,7 +70,7 @@ const GoogleAudio = () => {
       {/* <p className="mt-5 text-sm text-[#fff] w-[90%]">
         It is listening in real-time and showing probability by percentage
       </p> */}
-      <div id="label-container" className="mt-10 grid gap-2"></div>
+      <div id="label-container" className="m-10 grid gap-2"></div>
     </div>
   );
 };

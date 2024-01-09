@@ -32,9 +32,9 @@ const Spectrogram = () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
-      if (socket.current) {
-        socket.current.disconnect();
-      }
+      // if (socket.current) {
+      //   socket.current.disconnect();
+      // }
     };
   }, []);
 
@@ -43,37 +43,12 @@ const Spectrogram = () => {
       // WebRTC API allows to access user's microphone
       navigator.mediaDevices.getUserMedia({ audio: true }).then((micStream) => {
         setStream(micStream);
-
-        // Web Audio API lets to analyse the received data from mic
-        const audioContext = new (window.AudioContext ||
-          window.webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 4096;
-
-        const source = audioContext.createMediaStreamSource(micStream);
-        source.connect(analyser);
-
-        // Stream audio data to the server via WebSocket
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        source.onaudioprocess = (event) => {
-          analyser.getByteFrequencyData(data);
-          const audioData = Array.from(data); // Convert to array if necessary
-          //socket.current.emit("audioData", audioData);
-        };
-
-        // Listen for predictions from the server
-        // socket.current.on("prediction", (data) => {
-        //   setPrediction(data.prediction);
-        // });
       });
     } else if (!isMicOn && stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
       setPrediction(null);
     }
-
-    // console.log("isMicOn: ", isMicOn);
-    // console.log("socket ", socket.current);
 
     return () => {
       //socket.current.off("prediction");
@@ -87,11 +62,13 @@ const Spectrogram = () => {
     if (stream) {
       const audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
+
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 4096;
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
+
       canvasRef.current.setAttribute("willReadFrequently", "");
       const ctx = canvasRef.current.getContext("2d");
       const data = new Uint8Array(analyser.frequencyBinCount);
