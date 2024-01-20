@@ -49,14 +49,14 @@ jobs:
           path: ~/artifacts
           destination: node-build
 
-   deploy:
-    # Deploy it to Vercel
+  deploy:
+    # Deploy to Vercel
     docker:
       - image: cimg/base:stable
     steps:
       - checkout
       - run:
-          name: Installs Node.js and npm
+          name: Install Node.js and npm
           command: |
             sudo apt-get update
             sudo apt-get install -y nodejs npm
