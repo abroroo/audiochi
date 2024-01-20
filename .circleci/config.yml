@@ -59,17 +59,17 @@ jobs:
     # Deploy to Vercel
     docker:
       - image: circleci/node:latest
-    environment:
-      VERCEL_ORG_ID: $VERCEL_ORG_ID
-      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+    # environment:
+    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
+    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
-      - run:
-          name: Debug Print
-          command: |
-            echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
-            echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
-            printenv
+      # - run:
+      #     name: Debug Print
+      #     command: |
+      #       echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
+      #       echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
+      #       printenv
       - run:
           name: Install Vercel CLI
           command: npm install vercel@latest
