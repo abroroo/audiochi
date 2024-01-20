@@ -51,14 +51,18 @@ jobs:
 
   deploy:
     # Deploy to Vercel
-    executor: node/default
+    docker:
+      - image: cimg/base:stable
     steps:
       - checkout
-      - node/install-packages:
-          pkg-manager: npm
+      - run:
+          name: Install Node.js and npm
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y nodejs npm
       - run:
           name: Install Vercel CLI
-          command: npm install -g vercel
+          command: npm install vercel
       - run:
           name: Deploy to Vercel
           command: npx vercel --prod
@@ -66,6 +70,7 @@ jobs:
           root: .
           paths:
             - .vercel
+
 
 workflows:
   build-and-test:
