@@ -63,13 +63,13 @@ jobs:
           command: npm install vercel@latest
       - run:
           name: Pull Vercel Environment Information
-          command: vercel pull --yes --environment=production --token=$VERCELTOKEN_FOR_CIRCLE_CI
+          command: npx vercel pull --yes --environment=production --token=$VERCELTOKEN_FOR_CIRCLE_CI
       - run:
           name: Build Project Artifacts
-          command: vercel build --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
+          command: npx vercel build --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
       - run:
           name: Deploy Project Artifacts to Vercel
-          command: vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
+          command: npx vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
       - persist_to_workspace:
           root: .
           paths:
