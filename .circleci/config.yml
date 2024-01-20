@@ -34,7 +34,7 @@ jobs:
       - run:
           name: Print node install help instructions
           command: |-
-            echo "Node build failed"
+            echo "Node build has failed"
           when: on_fail
       - run:
           command: npm run build
