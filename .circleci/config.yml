@@ -60,7 +60,7 @@ jobs:
       - checkout
       - run:
           name: Install Vercel CLI
-          command: npm install --global vercel@latest
+          command: npm install vercel@latest
       - run:
           name: Pull Vercel Environment Information
           command: vercel pull --yes --environment=production --token=$VERCELTOKEN_FOR_CIRCLE_CI
