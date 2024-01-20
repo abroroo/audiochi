@@ -14,7 +14,7 @@ jobs:
       - run:
           name: Print node install help instructions
           command: |-
-            echo "Jest tests failed"
+            echo "Jest tests have failed"
           when: on_fail
       - run:
           command: npm install jest-junit
