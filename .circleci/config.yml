@@ -47,10 +47,10 @@ jobs:
           command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
       - run:
           name: Log VERCEL_ORG_ID
-          command: echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
+          command: echo "$VERCEL_ORG_ID"
       - run:
           name: Log VERCEL_PROJECT_ID
-          command: echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
+          command: echo "$VERCEL_PROJECT_ID"
       - store_artifacts:
           path: ~/artifacts
           destination: node-build
