@@ -45,47 +45,51 @@ jobs:
       - run:
           name: Copy artifacts
           command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
-      - run:
-          name: Log VERCEL_ORG_ID
-          command: echo "$VERCEL_ORG_ID"
-      - run:
-          name: Log VERCEL_PROJECT_ID
-          command: echo "$VERCEL_PROJECT_ID"
       - store_artifacts:
           path: ~/artifacts
           destination: node-build
 
-  deploy:
-    # Deploy to Vercel
-    docker:
-      - image: circleci/node:latest
-    # environment:
-    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
-    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
-    steps:
-      - checkout
-      # - run:
-      #     name: Debug Print
-      #     command: |
-      #       echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
-      #       echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
-      #       printenv
-      - run:
-          name: Install Vercel CLI
-          command: npm install vercel@latest
-      - run:
-          name: Pull Vercel Environment Information
-          command: npx vercel pull --yes --environment=production --token=$VERCELTOKEN_FOR_CIRCLE_CI
-      - run:
-          name: Build Project Artifacts
-          command: npx vercel build --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
-      - run:
-          name: Deploy Project Artifacts to Vercel
-          command: npx vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .vercel
+  preview_deployment:
+      docker:
+        - image: circleci/node:latest
+      environment:
+        VERCEL_ORG_ID: $VERCEL_ORG_ID
+        VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+      steps:
+        - checkout
+        - run:
+            name: Install Vercel CLI
+            command: npm install vercel@latest
+        - run:
+            name: Pull Vercel Environment Information
+            command: npx vercel pull --yes --environment=preview --token=$VERCELTOKEN_FOR_CIRCLE_CI
+        - run:
+            name: Build Project Artifacts
+            command: npx vercel build --token=$VERCELTOKEN_FOR_CIRCLE_CI
+        - run:
+            name: Deploy Project Artifacts to Vercel
+            command: npx vercel deploy --prebuilt --token=$VERCELTOKEN_FOR_CIRCLE_CI
+
+    production_deployment:
+      docker:
+        - image: circleci/node:latest
+      environment:
+        VERCEL_ORG_ID: $VERCEL_ORG_ID
+        VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+      steps:
+        - checkout
+        - run:
+            name: Install Vercel CLI
+            command: npm install vercel@latest
+        - run:
+            name: Pull Vercel Environment Information
+            command: npx vercel pull --yes --environment=production --token=$VERCELTOKEN_FOR_CIRCLE_CI
+        - run:
+            name: Build Project Artifacts
+            command: npx vercel build --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
+        - run:
+            name: Deploy Project Artifacts to Vercel
+            command: npx vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
 
 
 
@@ -98,6 +102,12 @@ workflows:
       - build-node:
           requires:
             - test-node
-      - deploy:
-          requires:
-            - build-node
+      - preview_deployment:
+          filters:
+            branches:
+              ignore: /main/
+      - production_deployment:
+          filters:
+            branches:
+              only: /main/
+
