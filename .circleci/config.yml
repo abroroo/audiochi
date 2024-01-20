@@ -1,11 +1,9 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:node:.,test:jest:
 version: 2.1
 orbs:
   node: circleci/node@5
 jobs:
   test-node:
-    # Install node dependencies and run tests
+    # Installs node dependencies and run tests
     executor: node/default
     environment:
       JEST_JUNIT_OUTPUT_DIR: ./test-results/
@@ -16,16 +14,7 @@ jobs:
       - run:
           name: Print node install help instructions
           command: |-
-            echo "One cause for node package install failure is if you have private repositories that it can't reach
-            One way to fix this for private npm packages:
-              1. Use the npm CLI's \"login\" command to create a token (usually saved in your user's \"~/.npmrc\" file)
-                For more info, see https://circleci.com/blog/publishing-npm-packages-using-circleci-2-0/#:~:text=set%20the%20%24npm_token%20environment%20variable%20in%20circleci
-              2. Add a NPM_TOKEN to an org context
-                For info on how to use contexts, see https://circleci.com/docs/contexts/
-              3. Add a .circleci/config.yml to your repository or use this config.yml as a starting template
-              4. Configure the jobs to use the context that includes NPM_TOKEN
-              5. Add a step to inject your NPM_TOKEN environment variable into npm before \"install-packages\"
-                For an example, see https://circleci.com/blog/publishing-npm-packages-using-circleci-2-0/#:~:text=the%20deploy%20job%20has%20several%20steps%20that%20run%20to%20authenticate%20with%20and%20publish%20to"
+            echo "Jest tests failed"
           when: on_fail
       - run:
           command: npm install jest-junit
@@ -34,8 +23,9 @@ jobs:
           command: npm run test --ci --runInBand --reporters=default --reporters=jest-junit
       - store_test_results:
           path: ./test-results/
+
   build-node:
-    # Build node project
+    # Builds node project
     executor: node/default
     steps:
       - checkout
@@ -44,16 +34,7 @@ jobs:
       - run:
           name: Print node install help instructions
           command: |-
-            echo "One cause for node package install failure is if you have private repositories that it can't reach
-            One way to fix this for private npm packages:
-              1. Use the npm CLI's \"login\" command to create a token (usually saved in your user's \"~/.npmrc\" file)
-                For more info, see https://circleci.com/blog/publishing-npm-packages-using-circleci-2-0/#:~:text=set%20the%20%24npm_token%20environment%20variable%20in%20circleci
-              2. Add a NPM_TOKEN to an org context
-                For info on how to use contexts, see https://circleci.com/docs/contexts/
-              3. Add a .circleci/config.yml to your repository or use this config.yml as a starting template
-              4. Configure the jobs to use the context that includes NPM_TOKEN
-              5. Add a step to inject your NPM_TOKEN environment variable into npm before \"install-packages\"
-                For an example, see https://circleci.com/blog/publishing-npm-packages-using-circleci-2-0/#:~:text=the%20deploy%20job%20has%20several%20steps%20that%20run%20to%20authenticate%20with%20and%20publish%20to"
+            echo "Node build failed"
           when: on_fail
       - run:
           command: npm run build
@@ -67,15 +48,24 @@ jobs:
       - store_artifacts:
           path: ~/artifacts
           destination: node-build
+
   deploy:
-    # This is an example deploy job, not actually used by the workflow
+    # Deploy to Vercel
     docker:
       - image: cimg/base:stable
     steps:
-      # Replace this with steps to deploy to users
+      - checkout
       - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+          name: Install Vercel CLI
+          command: npm install -g vercel
+      - run:
+          name: Deploy to Vercel
+          command: vercel --prod
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .vercel
+
 workflows:
   build-and-test:
     jobs:
@@ -83,6 +73,6 @@ workflows:
       - build-node:
           requires:
             - test-node
-    # - deploy:
-    #     requires:
-    #       - build-node
+      - deploy:
+          requires:
+            - build-node
