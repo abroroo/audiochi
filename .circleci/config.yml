@@ -65,7 +65,7 @@ jobs:
           command: npm install vercel
       - run:
           name: Deploy to Vercel
-          command: vercel deploy
+          command: npx vercel --prod
       - persist_to_workspace:
           root: .
           paths:
