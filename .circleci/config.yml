@@ -99,10 +99,14 @@ workflows:
           requires:
             - test-node
       - preview_deployment:
+          requires:
+            - build-node
           filters:
             branches:
               ignore: /main/
       - production_deployment:
+          requires:
+            - build-node
           filters:
             branches:
               only: /main/
