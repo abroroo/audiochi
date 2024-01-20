@@ -62,7 +62,7 @@ jobs:
             sudo apt-get install -y nodejs npm
       - run:
           name: Install Vercel CLI
-          command: npm install -g vercel
+          command: npm install vercel
       - run:
           name: Deploy to Vercel
           command: vercel --prod
