@@ -69,6 +69,7 @@ jobs:
           command: |
             echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
             echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
+            printenv
       - run:
           name: Install Vercel CLI
           command: npm install vercel@latest
@@ -85,6 +86,7 @@ jobs:
           root: .
           paths:
             - .vercel
+
 
 
 
