@@ -100,7 +100,7 @@ jobs:
 
   clear-cache:
     docker:
-      - image: cibuilds/ci-cache-docker:latest
+      - image: docker:stable
     steps:
       - checkout
       - run:
