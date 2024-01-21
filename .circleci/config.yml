@@ -7,6 +7,8 @@ jobs:
     executor: node/default
     environment:
       JEST_JUNIT_OUTPUT_DIR: ./test-results/
+      VERCEL_ORG_ID: $VERCEL_ORG_ID
+      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - node/install-packages:
@@ -52,9 +54,9 @@ jobs:
   preview_deployment:
     docker:
       - image: circleci/node:latest
-    environment:
-      VERCEL_ORG_ID: $VERCEL_ORG_ID
-      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+    # environment:
+    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
+    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - run:
