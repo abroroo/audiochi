@@ -54,9 +54,6 @@ jobs:
   preview_deployment:
     docker:
       - image: cimg/node:18.19.0
-    # environment:
-    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
-    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - run:
@@ -80,9 +77,6 @@ jobs:
   production_deployment:
     docker:
       - image: cimg/node:18.19.0
-    # environment:
-    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
-    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - run:
@@ -98,26 +92,10 @@ jobs:
           name: Deploy Project Artifacts to Vercel
           command: npx vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
 
-  # clear-cache:
-  #   docker:
-  #     - image: docker:stable
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Clear Cache
-  #         command: |
-  #           rm -rf $HOME/.cache
-  #           rm -rf node_modules
-  #           rm -rf ~/.npm
-  #           # Add more cache directories as needed
-
 workflows:
   build-and-test:
     jobs:
-      # - clear-cache
       - test-node
-      # requires:
-      #   - clear-cache
       - build-node:
           requires:
             - test-node
