@@ -98,10 +98,26 @@ jobs:
           name: Deploy Project Artifacts to Vercel
           command: npx vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
 
+  clear-cache:
+    docker:
+      - image: cibuilds/ci-cache-docker:latest
+    steps:
+      - checkout
+      - run:
+          name: Clear Cache
+          command: |
+            rm -rf $HOME/.cache
+            rm -rf node_modules
+            rm -rf ~/.npm
+            # Add more cache directories as needed
+
 workflows:
   build-and-test:
     jobs:
-      - test-node
+      - clear-cache
+      - test-node:
+          requires:
+            - clear-cache
       - build-node:
           requires:
             - test-node
