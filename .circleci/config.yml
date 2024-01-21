@@ -1,0 +1,135 @@
+version: 2.1
+orbs:
+  node: circleci/node@5
+jobs:
+  test-node:
+    # Installs node dependencies and run tests
+    executor: node/default
+    environment:
+      JEST_JUNIT_OUTPUT_DIR: ./test-results/
+      VERCEL_ORG_ID: $VERCEL_ORG_ID
+      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Print node install help instructions
+          command: |-
+            echo "Jest tests have failed"
+          when: on_fail
+      - run:
+          command: npm install jest-junit
+      - run:
+          name: Run tests
+          command: npm run test --ci --runInBand --reporters=default --reporters=jest-junit
+      - store_test_results:
+          path: ./test-results/
+
+  build-node:
+    # Builds node project
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: npm
+      - run:
+          name: Print node install help instructions
+          command: |-
+            echo "Node build has failed"
+          when: on_fail
+      - run:
+          command: npm run build
+      - run:
+          name: Create the ~/artifacts directory if it doesn't exist
+          command: mkdir -p ~/artifacts
+      # Copy output to artifacts dir
+      - run:
+          name: Copy artifacts
+          command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
+      - store_artifacts:
+          path: ~/artifacts
+          destination: node-build
+
+  preview_deployment:
+    docker:
+      - image: cimg/node:18.19.0
+    # environment:
+    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
+    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+    steps:
+      - checkout
+      - run:
+          name: Debug Print
+          command: |
+            echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
+            echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
+      - run:
+          name: Install Vercel CLI
+          command: npm install vercel@latest
+      - run:
+          name: Pull Vercel Environment Information
+          command: npx vercel pull --yes --environment=preview --token=$VERCELTOKEN_FOR_CIRCLE_CI
+      - run:
+          name: Build Project Artifacts
+          command: npx vercel build --token=$VERCELTOKEN_FOR_CIRCLE_CI
+      - run:
+          name: Deploy Project Artifacts to Vercel
+          command: npx vercel deploy --prebuilt --token=$VERCELTOKEN_FOR_CIRCLE_CI
+
+  production_deployment:
+    docker:
+      - image: cimg/node:18.19.0
+    # environment:
+    #   VERCEL_ORG_ID: $VERCEL_ORG_ID
+    #   VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
+    steps:
+      - checkout
+      - run:
+          name: Install Vercel CLI
+          command: npm install vercel@latest
+      - run:
+          name: Pull Vercel Environment Information
+          command: npx vercel pull --yes --environment=production --token=$VERCELTOKEN_FOR_CIRCLE_CI
+      - run:
+          name: Build Project Artifacts
+          command: npx vercel build --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
+      - run:
+          name: Deploy Project Artifacts to Vercel
+          command: npx vercel deploy --prebuilt --prod --token=$VERCELTOKEN_FOR_CIRCLE_CI
+
+  # clear-cache:
+  #   docker:
+  #     - image: docker:stable
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Clear Cache
+  #         command: |
+  #           rm -rf $HOME/.cache
+  #           rm -rf node_modules
+  #           rm -rf ~/.npm
+  #           # Add more cache directories as needed
+
+workflows:
+  build-and-test:
+    jobs:
+      # - clear-cache
+      - test-node
+      # requires:
+      #   - clear-cache
+      - build-node:
+          requires:
+            - test-node
+      - preview_deployment:
+          requires:
+            - build-node
+          filters:
+            branches:
+              ignore: /main/
+      - production_deployment:
+          requires:
+            - build-node
+          filters:
+            branches:
+              only: /main/
