@@ -1,95 +1,77 @@
 "use client";
 import React, { useRef, useEffect, useState, useCallback } from "react";
-import { io } from "socket.io-client";
 import GoogleAudio from "./GoogleAudio";
+
 const Spectrogram = () => {
   const canvasRef = useRef(null);
   const [isMicOn, setIsMicOn] = useState(false);
-  const [stream, setStream] = useState(null);
-  const socket = useRef(null);
-  const [prediction, setPrediction] = useState(null); // State to store the received prediction
+  const [audioStream, setAudioStream] = useState(null);
 
+  // TURN ON THE MICROPHONE
   useEffect(() => {
-    // socket.current = io("/api/getPrediction");
-
-    // socket.current.on("connect", () => {
-    //   console.log("Socket connected");
-    // });
-
-    // socket.current.on("connect_error", (error) => {
-    //   console.error("Socket connection error:", error);
-    // });
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    canvas.width = width;
-    canvas.height = height;
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-      // if (socket.current) {
-      //   socket.current.disconnect();
-      // }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isMicOn && !stream) {
-      // WebRTC API allows to access user's microphone
+    if (isMicOn && !audioStream) {
+      // navigator is part of WebRTC API that allows to access user's microphone
       navigator.mediaDevices.getUserMedia({ audio: true }).then((micStream) => {
-        setStream(micStream);
+        setAudioStream(micStream);
       });
-    } else if (!isMicOn && stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-      setPrediction(null);
+    } else if (!isMicOn && audioStream) {
+      audioStream.getTracks().forEach((track) => track.stop());
+      setAudioStream(null);
     }
 
     return () => {
-      //socket.current.off("prediction");
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [isMicOn]);
 
+  // SETTING UP THE CANVAS
   useEffect(() => {
-    if (stream) {
+    const canvasElement = canvasRef.current;
+    // const ctx = canvas.getContext("2d");
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    canvasElement.width = windowWidth;
+    canvasElement.height = windowHeight;
+
+    return () => {
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // DRAW THE SPECTOGRAM
+  useEffect(() => {
+    if (audioStream) {
+      // audioContext is part of Web Audio API that allows to create, manipulate and visualize audio
       const audioContext = new (window.AudioContext ||
         window.webkitAudioContext)();
 
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 4096;
 
-      const source = audioContext.createMediaStreamSource(stream);
+      const source = audioContext.createMediaStreamSource(audioStream);
       source.connect(analyser);
 
       canvasRef.current.setAttribute("willReadFrequently", "");
       const ctx = canvasRef.current.getContext("2d");
       const data = new Uint8Array(analyser.frequencyBinCount);
       const len = data.length;
-      const h = window.innerHeight / len;
-      const x = window.innerWidth - 1;
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const h = windowHeight / len;
+      const w = windowWidth - 1;
 
       ctx.fillStyle = "hsl(280, 100%, 10%)";
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      ctx.fillRect(0, 0, windowWidth, windowHeight);
 
       function drawSpectrogram() {
         window.requestAnimationFrame(drawSpectrogram);
-        let imgData = ctx.getImageData(
-          1,
-          0,
-          window.innerWidth - 1,
-          window.innerHeight
-        );
-        ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+        let imgData = ctx.getImageData(1, 0, windowWidth - 1, windowHeight);
+        ctx.fillRect(0, 0, windowWidth, windowHeight);
         ctx.putImageData(imgData, 0, 0);
         analyser.getByteFrequencyData(data);
 
@@ -102,8 +84,8 @@ const Spectrogram = () => {
 
           ctx.beginPath();
           ctx.strokeStyle = `hsl(${hue}, ${sat}, ${lit})`;
-          ctx.moveTo(x, height - i * h);
-          ctx.lineTo(x, height - (i * h + h));
+          ctx.moveTo(w, windowHeight - i * h);
+          ctx.lineTo(w, windowHeight - (i * h + h));
           ctx.stroke();
         }
       }
@@ -114,7 +96,7 @@ const Spectrogram = () => {
         analyser.disconnect();
       };
     }
-  }, [stream]);
+  }, [audioStream]);
 
   const toggleMicrophone = useCallback(() => {
     setIsMicOn((prev) => !prev);

@@ -13,7 +13,7 @@ const GoogleAudio = () => {
 
     const newRecognizer = speechCommands.create(
       "BROWSER_FFT", // Fourier transform type
-      undefined, // Speech commands vocabulary feature (not needed for your models)
+      undefined, // Speech commands vocabulary feature (not needed for this model)
       checkpointURL,
       metadataURL
     );
@@ -24,9 +24,9 @@ const GoogleAudio = () => {
   }
 
   async function startPredictions() {
-    const newRecognizer = await createModel();
+    const createdModel = await createModel();
     setIsPredicting(true);
-    const classLabels = newRecognizer.wordLabels();
+    const classLabels = createdModel.wordLabels();
     const labelContainer = document.getElementById("label-container");
     labelContainer.innerHTML = "";
 
@@ -34,7 +34,7 @@ const GoogleAudio = () => {
       labelContainer.appendChild(document.createElement("div"));
     }
 
-    newRecognizer.listen((result) => {
+    createdModel.listen((result) => {
       const scores = result.scores;
       for (let i = 0; i < classLabels.length; i++) {
         const classPrediction = `${classLabels[i]}: ${(scores[i] * 100).toFixed(
@@ -67,9 +67,7 @@ const GoogleAudio = () => {
           Stop Predictions
         </button>
       )}
-      {/* <p className="mt-5 text-sm text-[#fff] w-[90%]">
-        It is listening in real-time and showing probability by percentage
-      </p> */}
+
       <div id="label-container" className="m-10 grid gap-2"></div>
     </div>
   );
