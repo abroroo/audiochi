@@ -9,17 +9,20 @@ const Spectrogram = () => {
 
   // TURN ON THE MICROPHONE
   useEffect(() => {
+    // START AUDIO STREAM
     if (isMicOn && !audioStream) {
       // navigator is part of WebRTC API that allows to access user's microphone
       navigator.mediaDevices.getUserMedia({ audio: true }).then((micStream) => {
         setAudioStream(micStream);
       });
     } else if (!isMicOn && audioStream) {
+      // STOP AUDIO STREAM
       audioStream.getTracks().forEach((track) => track.stop());
       setAudioStream(null);
     }
 
     return () => {
+      // STOP AUDIO STREAM WHEN COMPONENT UNMOUNTS
       if (audioStream) {
         audioStream.getTracks().forEach((track) => track.stop());
       }
@@ -29,18 +32,12 @@ const Spectrogram = () => {
   // SETTING UP THE CANVAS
   useEffect(() => {
     const canvasElement = canvasRef.current;
-    // const ctx = canvas.getContext("2d");
+
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
     canvasElement.width = windowWidth;
     canvasElement.height = windowHeight;
-
-    return () => {
-      if (audioStream) {
-        audioStream.getTracks().forEach((track) => track.stop());
-      }
-    };
   }, []);
 
   // DRAW THE SPECTOGRAM
@@ -51,15 +48,16 @@ const Spectrogram = () => {
         window.webkitAudioContext)();
 
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 4096;
+      analyser.fftSize = 4096; // The size of the FFT used for frequency-domain analysis. Must be a power of two
 
-      const source = audioContext.createMediaStreamSource(audioStream);
-      source.connect(analyser);
+      const source = audioContext.createMediaStreamSource(audioStream); // Create an audio node from the microphone stream
+      source.connect(analyser); // Connect the source to the analyser
+
+      const audioFrequencyArray = new Uint8Array(analyser.frequencyBinCount); // Create a new array to store the frequency data
 
       canvasRef.current.setAttribute("willReadFrequently", "");
       const ctx = canvasRef.current.getContext("2d");
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const len = data.length;
+      const len = audioFrequencyArray.length;
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       const h = windowHeight / len;
@@ -70,14 +68,18 @@ const Spectrogram = () => {
 
       function drawSpectrogram() {
         window.requestAnimationFrame(drawSpectrogram);
-        let imgData = ctx.getImageData(1, 0, windowWidth - 1, windowHeight);
-        ctx.fillRect(0, 0, windowWidth, windowHeight);
-        ctx.putImageData(imgData, 0, 0);
-        analyser.getByteFrequencyData(data);
 
-        // Draw your spectrogram here using the data
+        // CREATE THE APPEAREANCE OF CONTINUOUS MOTION TO THE LEFT.
+        let imgData = ctx.getImageData(1, 0, windowWidth - 1, windowHeight); //capture the pixel data of the canvas,
+        ctx.fillRect(0, 0, windowWidth, windowHeight); //clear the canvas
+        ctx.putImageData(imgData, 0, 0); //put the pixel data back to the canvas
+
+        // Populate audioFrequencyArray with audio frequency data using analyser.getByteFrequencyData()
+        analyser.getByteFrequencyData(audioFrequencyArray);
+
+        // Draw your spectrogram here using the Unit8Array "audioFrequencyArray"
         for (let i = 0; i < len; i++) {
-          let rat = data[i] / 255;
+          let rat = audioFrequencyArray[i] / 255;
           let hue = Math.round(rat * 120 + (280 % 360));
           let sat = "100%";
           let lit = 10 + 70 * rat + "%";
