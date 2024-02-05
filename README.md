@@ -55,7 +55,7 @@ Thanks to ChatGPT, I learned that I can achieve this with [WebRTC API](https://d
 
 `stream` now is equal to something like this :
 
-    ```json
+  ```yaml
     MediaStream {
       id: "media-stream-id",
       active: true,
@@ -64,7 +64,7 @@ Thanks to ChatGPT, I learned that I can achieve this with [WebRTC API](https://d
       ...
     }
 
-    ```
+  ```
 
 Once I had access to the raw audio, I used [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) which helped me convert those sound waves into actionable data points. It uses FFT (Fast Fourier Transform) algorithm to convert a time-domain signal (such as audio waveform) into its frequency-domain representation. It decomposes the signal into its constituent frequencies, allowing analysis of the signal's frequency content.
 
@@ -86,7 +86,7 @@ source.connect(analyser);
 
   `source` now looks like this :
 
-  ```json
+  ```yaml
   MediaStreamAudioSourceNode {
       context: AudioContext { /* Reference to the AudioContext object */ },
       mediaStream: MediaStream { /* Reference to the MediaStream object */ },
@@ -104,11 +104,11 @@ source.connect(analyser);
 
 The Audio data is typically represented in a 0 to 255 range, and store that data we can't use usual js array, we need `Uint8Array` which is designed for storing 8-bit unsigned integers, which are suitable for representing amplitude values ranging from 0 to 255.
 
-    ```javascript
+  ```javascript
     const audioFrequencyArray = new Uint8Array(analyser.frequencyBinCount); // Create a new array to store the frequency data
 
     analyser.getByteFrequencyData(audioFrequencyArray); // Populate data with frequency data using analyser.getByteFrequencyData()
-    ```
+  ```
 
 - The value of `frequencyBinCount` is typically half of the FFT size `(analyser.fftSize)` and represents the number of frequency data points returned by the FFT.
 
@@ -151,13 +151,13 @@ This process ensures that the canvas is cleared before drawing new content, prev
 
 Now we need to iterate over an array of audio frequency data `(audioFrequencyArray)` , representing frequency intensity values obtained from the audio stream.
 
-    For each frequency data point:
-    - The intensity value is normalized (`rat`) to a range between 0 and 1.
-    - A `hue` value is calculated based on the normalized intensity, which determines the color of the spectrogram line.
-    - The __strokeStyle__ of the canvas context (`ctx`) is set to a color based on the calculated hue, saturation (`sat`), and lightness (`lit`).
-    - A line is drawn on the canvas using `moveTo()` and `lineTo()`, representing the frequency intensity at that point in the spectrogram.
+  For each frequency data point:
+  - The intensity value is normalized (`rat`) to a range between 0 and 1.
+  - A `hue` value is calculated based on the normalized intensity, which determines the color of the spectrogram line.
+  - The __strokeStyle__ of the canvas context (`ctx`) is set to a color based on the calculated hue, saturation (`sat`), and lightness (`lit`).
+  - A line is drawn on the canvas using `moveTo()` and `lineTo()`, representing the frequency intensity at that point in the spectrogram.
 
-    ```javascript
+  ```javascript
     // Draw your spectrogram here using the Unit8Array "audioFrequencyArray"
     for (let i = 0; i < len; i++) {
       let rat = audioFrequencyArray[i] / 255;
@@ -171,9 +171,9 @@ Now we need to iterate over an array of audio frequency data `(audioFrequencyArr
       ctx.lineTo(x, height - (i * h + h));
       ctx.stroke();
     }
-    ```
+  ```
 
-    - After clearing the canvas and resetting it to its initial state, the spectrogram is drawn using the calculated frequency intensity values. The process of capturing and restoring the canvas state ensures that each iteration of drawing the spectrogram starts with a clean slate, preventing artifacts or remnants from previous visualizations.
+  - After clearing the canvas and resetting it to its initial state, the spectrogram is drawn using the calculated frequency intensity values. The process of capturing and restoring the canvas state ensures that each iteration of drawing the spectrogram starts with a clean slate, preventing artifacts or remnants from previous visualizations.
 
     > `window.requestAnimationFrame(drawSpectrogram)`
     >
