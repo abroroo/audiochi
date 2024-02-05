@@ -46,11 +46,11 @@ But for the start, I needed a way to access the user's microphone.
 
 Thanks to ChatGPT, I learned that I can achieve this with [WebRTC API](https://developer.mozilla.org/en-US/docs/Glossary/WebRTC) (native to browsers). I've explained how WebRTC works in [here](https://github.com/abroroo/til/blob/main/WebRTC/webrtc.md)
 
-```
-     const [stream, setStream] = useState(null);
-     navigator.mediaDevices.getUserMedia({ audio: true }).then((micStream) => {
+```javascript
+const [stream, setStream] = useState(null);
+navigator.mediaDevices.getUserMedia({ audio: true }).then((micStream) => {
              setStream(micStream);
-           });
+});
 ```
 
 `stream` now is equal to something like this :
