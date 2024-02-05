@@ -40,7 +40,7 @@ const newRecognizer = speechCommands.create(
 
 For the Sound Recognition part, we are done!
 
-## How to Visualise Audio
+## Convert Audio stream to array of numbers
 
 In the documenations of Web Audio API, there is very good [guide](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API#creating_a_frequency_bar_graph) on how to visualise audio using Canvas API .
 
