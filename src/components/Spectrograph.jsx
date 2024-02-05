@@ -69,15 +69,16 @@ const Spectrogram = () => {
       function drawSpectrogram() {
         window.requestAnimationFrame(drawSpectrogram);
 
-        // CREATE THE APPEAREANCE OF CONTINUOUS MOTION TO THE LEFT.
+        // MAKE CANVAS BARS CONTINUOUSLY MOOVE TO THE LEFT.
         let imgData = ctx.getImageData(1, 0, windowWidth - 1, windowHeight); //capture the pixel data of the canvas,
         ctx.fillRect(0, 0, windowWidth, windowHeight); //clear the canvas
         ctx.putImageData(imgData, 0, 0); //put the pixel data back to the canvas
 
         // Populate audioFrequencyArray with audio frequency data using analyser.getByteFrequencyData()
         analyser.getByteFrequencyData(audioFrequencyArray);
+        // EX: audioFrequencyArray = Uint8Array(2048) [110, 125, 140, 155, 170, 185, 200, 215, 230, ...]
 
-        // Draw your spectrogram here using the Unit8Array "audioFrequencyArray"
+        // Draw the spectrogram here using the Unit8Array "audioFrequencyArray"
         for (let i = 0; i < len; i++) {
           let rat = audioFrequencyArray[i] / 255;
           let hue = Math.round(rat * 120 + (280 % 360));
