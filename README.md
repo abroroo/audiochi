@@ -1,3 +1,5 @@
+## How I actually came up with this project:
+
 I got curious about [Google Teachable Machine](https://teachablemachine.withgoogle.com/v1/) after reading this [article](https://medium.com/@warronbebster/teachable-machine-tutorial-bananameter-4bfffa765866) on medium, where he trains banana classification model, showing final result on the [web](https://tm-image-demo.glitch.me/)
 
 I wanted it to try it myself and hopefully deploy it to the web too, and it [worked](https://audiochi.vercel.app/) , yay!
@@ -11,7 +13,7 @@ In this case, I added some audio classes like snap, clap, etc. TM fisrt requires
 It will retrain the model fine tunning it to recognize your defined classes
 ![](https://raw.githubusercontent.com/abroroo/audiochi/main/public/train.png)
 
-### How to build it with NextJS
+## How to build it with NextJS
 
 I learned that TM can be used with TenserFlow.js [models](https://www.tensorflow.org/js/models). And threre is only one audio processing model which is [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands)
 
@@ -38,7 +40,7 @@ const newRecognizer = speechCommands.create(
 
 For the Sound Recognition part, we are done!
 
-### How to Visualise Audio
+## How to Visualise Audio
 
 In the documenations of Web Audio API, there is very good [guide](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API#creating_a_frequency_bar_graph) on how to visualise audio using Canvas API .
 
@@ -119,7 +121,7 @@ The Audio data is typically represented in a 0 to 255 range, and store that data
 
   ```
 
-### For Drawing the spectogram
+## Drawing the spectogram
 
 Following the above mentioned tutorial and ChatGPT, I came up with this function:
 
