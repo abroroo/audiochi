@@ -5,37 +5,38 @@ describe('Spectograph content check:', () => {
     });
 
     it('displays the Title', () => {
-        cy.get('h1[data-test="spectogram-title"]').contains('Sound Recognition')
+        cy.getDataTest('spectogram-title').should('be.visible').and('have.text', 'Sound Recognition');
+
 
     });
     it('displays the Title text', () => {
-        cy.get('p[data-test="spectogram-title-text"]').contains('This experiment needs access to your microphone and your device to be in quiter place.')
+        cy.getDataTest("spectogram-title-text").contains('This experiment needs access to your microphone and your device to be in quiter place.')
     });
 
     it('displays the paragraph', () => {
-        cy.get('p[data-test="spectogram-p-text"]').contains("It can visualize audio as frequency of sound patterns (more red greater the frequency). To check if it's working you can start with (shshshshs) sound.");
+        cy.getDataTest("spectogram-p-text").contains("It can visualize audio as frequency of sound patterns (more red greater the frequency). To check if it's working you can start with (shshshshs) sound.");
     });
 
     it('correctly displays the toggle texts on the button', () => {
-        cy.get('[data-test="spectogram-toggle-button"]').contains('Visualize Audio')
-        cy.get('button[data-test="spectogram-toggle-button"]').click();
-        cy.get('[data-test="spectogram-toggle-button"]').contains('Stop spectrogram')
+        cy.getButton('Visualize Audio')
+        cy.getDataTest('spectogram-toggle-button').click();
+        cy.getButton('Stop spectrogram')
     });
 
 
     it('Canvas renders when microphone is toggled', () => {
 
-        cy.get('button[data-test="spectogram-toggle-button"]').click();
+        cy.getButton('Visualize Audio').click();
         cy.wait(3000);
         cy.get('canvas').should(($canvas) => {
             expect($canvas[0].width).to.be.greaterThan(0);
             expect($canvas[0].height).to.be.greaterThan(0);
         });
-        cy.get('button[data-test="spectogram-toggle-button"]').click();
+        cy.getButton('Stop spectrogram').click();
     });
 
     it('displays the author tag', () => {
-        cy.get('[data-test="author-tag"]').contains('abroro')
+        cy.getDataTest('author-tag').contains('abroro')
     });
 });
 
@@ -53,7 +54,7 @@ describe('Is Browser actually listening to the audio ?', () => {
         });
 
         // Click the "Visualize Audio" button
-        cy.get('button[data-test="spectogram-toggle-button"]').click();
+        cy.getButton('Visualize Audio').click();
 
         // Check if the browser is capturing audio
         cy.get('@getUserMediaSpy').should('have.been.calledWith', { audio: true });
@@ -66,9 +67,9 @@ describe('Is Browser actually listening to the audio ?', () => {
 
 describe('Is Spectogram getting generated ?', () => {
     it('Validates the content drawn on the canvas', () => {
-        cy.visit('http://localhost:3000/');
+        cy.visit('/');
 
-        cy.get('button[data-test="spectogram-toggle-button"]').click();
+        cy.getButton('Visualize Audio').click();
 
 
         cy.wait(3000);
