@@ -106,21 +106,33 @@ const Spectrogram = () => {
   }, []);
 
   return (
-    <div>
+    <div data-test="spectogram-container">
       <div className="h1-div flex justify-center items-center flex-col">
-        <h1 className="">Sound Recognition</h1>
-        <p className=" m-0 text-sm text-[#fff] w-[90%]">
+        <h1 data-test="spectogram-title" className="">
+          Sound Recognition
+        </h1>
+        <p
+          data-test="spectogram-title-text"
+          className=" m-0 text-sm text-[#fff] w-[90%]"
+        >
           This experiment needs access to your microphone and your device to be
           in quiter place.
         </p>
       </div>
       <div className="button-div md:top-[25%] top-[33%] xl:top-[20%] flex items-center justify-center flex-col">
-        <p className=" m-5 text-sm text-[#fff] w-[90%]">
+        <p
+          data-test="spectogram-p-text"
+          className=" m-5 text-sm text-[#fff] w-[90%]"
+        >
           It can visualize audio as frequency of sound patterns (more red
           greater the frequency). To check if it's working you can start with
           (shshshshs) sound.
         </p>
-        <button className=" button-28 " onClick={toggleMicrophone}>
+        <button
+          data-test="spectogram-toggle-button"
+          className=" button-28 "
+          onClick={toggleMicrophone}
+        >
           {isMicOn ? "Stop spectrogram" : "Visualize Audio"}
         </button>
 
@@ -129,7 +141,10 @@ const Spectrogram = () => {
       <div className="canvas-div">
         <canvas ref={canvasRef} />
       </div>
-      <p className="text-xs text-[#646363] absolute bottom-5 w-full  left-0 flex  justify-center">
+      <p
+        data-test="author-tag"
+        className="text-xs text-[#646363] absolute bottom-5 w-full  left-0 flex  justify-center"
+      >
         by
         <a target="_blank" href="https://github.com/abroroo" className="ml-1">
           abroro
