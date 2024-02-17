@@ -2,7 +2,10 @@ describe('Spectograph content check:', () => {
     beforeEach(() => {
         // Visit the page containing the component
         cy.visit('/');
+        cy.getDataTest('spectogram-toggle-button').as('toggleButton');
     });
+
+
 
     it('displays the Title', () => {
         cy.getDataTest('spectogram-title').should('be.visible').and('have.text', 'Sound Recognition');
@@ -18,21 +21,21 @@ describe('Spectograph content check:', () => {
     });
 
     it('correctly displays the toggle texts on the button', () => {
-        cy.getButton('Visualize Audio')
+        cy.get('@toggleButton').contains('Visualize Audio');
         cy.getDataTest('spectogram-toggle-button').click();
-        cy.getButton('Stop spectrogram')
+        cy.get('@toggleButton').contains('Stop spectrogram');
     });
 
 
     it('Canvas renders when microphone is toggled', () => {
 
-        cy.getButton('Visualize Audio').click();
+        cy.get('@toggleButton').click();
         cy.wait(3000);
         cy.get('canvas').should(($canvas) => {
             expect($canvas[0].width).to.be.greaterThan(0);
             expect($canvas[0].height).to.be.greaterThan(0);
         });
-        cy.getButton('Stop spectrogram').click();
+        cy.get('@toggleButton').click();
     });
 
     it('displays the author tag', () => {
@@ -45,6 +48,7 @@ describe('Is Browser actually listening to the audio ?', () => {
     beforeEach(() => {
         // Visit the page containing the component
         cy.visit('/');
+        cy.getDataTest('spectogram-toggle-button').as('toggleButton');
     });
 
     it('starts capturing audio when "Visualize Audio" button is clicked', () => {
@@ -54,7 +58,7 @@ describe('Is Browser actually listening to the audio ?', () => {
         });
 
         // Click the "Visualize Audio" button
-        cy.getButton('Visualize Audio').click();
+        cy.get('@toggleButton').click();
 
         // Check if the browser is capturing audio
         cy.get('@getUserMediaSpy').should('have.been.calledWith', { audio: true });
@@ -68,8 +72,9 @@ describe('Is Browser actually listening to the audio ?', () => {
 describe('Is Spectogram getting generated ?', () => {
     it('Validates the content drawn on the canvas', () => {
         cy.visit('/');
+        cy.getDataTest('spectogram-toggle-button').as('toggleButton');
 
-        cy.getButton('Visualize Audio').click();
+        cy.get('@toggleButton').click();
 
 
         cy.wait(3000);
