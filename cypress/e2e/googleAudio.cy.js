@@ -1,7 +1,7 @@
 describe('Sound Prediction Container', () => {
   beforeEach(() => {
     // Visit the page containing the component
-    cy.visit('http://localhost:3000/');
+    cy.visit('/');
   });
 
   it('displays the correct text', () => {
@@ -52,7 +52,7 @@ describe('Sound Prediction Container', () => {
     cy.get('#label-container div').should('have.length', 5).each(($div) => {
       cy.wrap($div).should('not.be.empty');
     });
-
-
   });
+
+
 });

@@ -1,7 +1,7 @@
-describe('Spectograph', () => {
+describe('Spectograph content check:', () => {
     beforeEach(() => {
         // Visit the page containing the component
-        cy.visit('http://localhost:3000/');
+        cy.visit('/');
     });
 
     it('displays the Title', () => {
@@ -39,9 +39,32 @@ describe('Spectograph', () => {
     });
 });
 
+describe('Is Browser actually listening to the audio ?', () => {
+
+    beforeEach(() => {
+        // Visit the page containing the component
+        cy.visit('/');
+    });
+
+    it('starts capturing audio when "Visualize Audio" button is clicked', () => {
+        // Spy on navigator.mediaDevices.getUserMedia
+        cy.window().then((window) => {
+            cy.spy(window.navigator.mediaDevices, 'getUserMedia').as('getUserMediaSpy');
+        });
+
+        // Click the "Visualize Audio" button
+        cy.get('[data-test="spectogram-toggle-button"]').click();
+
+        // Check if the browser is capturing audio
+        cy.get('@getUserMediaSpy').should('have.been.calledWith', { audio: true });
 
 
-describe('Spectogram is Generated', () => {
+    });
+
+});
+
+
+describe('Is Spectogram getting generated ?', () => {
     it('Validates the content drawn on the canvas', () => {
         cy.visit('http://localhost:3000/');
 
@@ -83,3 +106,6 @@ describe('Spectogram is Generated', () => {
     }
 
 })
+
+
+
