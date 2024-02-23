@@ -1,30 +1,38 @@
+import React, { useState, useEffect } from "react";
 
-import React, {useState, useEffect} from 'React';
+const Counter = ({ count }) => {
+  const [emoji, setEmoji] = useState(null);
+  const [error, setError] = useState(null);
 
+  const getEmoji = (count) => {
+    fetch(
+      `https://okdqm6aeoc.execute-api.us-east-1.amazonaws.com/prod/try?count=${count}`
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        return response.json();
+      })
+      .then((data) => setEmoji(data.input))
+      .catch((error) => setError(error.message)); // Handle fetch errors
+  };
 
-export default Counter = (count) => {
+  useEffect(() => {
+    if (count) {
+      getEmoji(count);
+    }
+  }, [count]);
 
-const [emoji, setEmoji] = useState(null) 
-
-
-const getEmoji = (count) => {
-    fetch(`https://okdqm6aeoc.execute-api.us-east-1.amazonaws.com/prod/try?count=${count}`)
-        .then(response => response.json())
-        .then(data => setEmoji(data.input))
-}
-
-useEffect(() => {
-    getEmoji(count);
-
-}, [count])
-
-
-return (
-    <>
-    <div>
-        <p>Try! {emoji}</p>
+  return (
+    <div className="text-white">
+      {error ? (
+        <p>Error: {error}</p>
+      ) : (
+        <p>Try! {emoji !== null ? emoji : "Click the button "}</p>
+      )}
     </div>
-    </>
-)
+  );
+};
 
-}
+export default Counter;

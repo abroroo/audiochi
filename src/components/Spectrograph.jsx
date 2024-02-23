@@ -1,14 +1,14 @@
 "use client";
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import GoogleAudio from "./GoogleAudio";
-import Counter from "./Counter"
+import Counter from "./Counter";
 
 const Spectrogram = () => {
   const canvasRef = useRef(null);
   const [isMicOn, setIsMicOn] = useState(false);
   const [audioStream, setAudioStream] = useState(null);
   const [count, setCount] = useState(0);
- 
+
   // TURN ON THE MICROPHONE
   useEffect(() => {
     // START AUDIO STREAM
@@ -105,7 +105,7 @@ const Spectrogram = () => {
 
   const toggleMicrophone = useCallback(() => {
     setIsMicOn((prev) => !prev);
-    setCount((count) => count + 1)
+    setCount((count) => count + 1);
   }, []);
 
   return (
