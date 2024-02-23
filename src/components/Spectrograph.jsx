@@ -137,8 +137,9 @@ const Spectrogram = () => {
           onClick={toggleMicrophone}
         >
           {isMicOn ? "Stop spectrogram" : "Visualize Audio"}
+          <Counter count={count} />
         </button>
-        <Counter count={count} />
+
         <GoogleAudio />
       </div>
       <div className="canvas-div">

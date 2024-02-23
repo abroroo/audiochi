@@ -25,12 +25,8 @@ const Counter = ({ count }) => {
   }, [count]);
 
   return (
-    <div className="text-white">
-      {error ? (
-        <p>Error: {error}</p>
-      ) : (
-        <p>Try! {emoji !== null ? emoji : "Click the button "}</p>
-      )}
+    <div className="text-white ">
+      {error ? <p>Error: {error}</p> : <p>{emoji !== null ? emoji : ""}</p>}
     </div>
   );
 };
