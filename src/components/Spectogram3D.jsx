@@ -26,7 +26,7 @@ const Spectogram3D = () => {
     if (isMicOn && isInitialized) {
       audioContext = new AudioContext();
       analyser = audioContext.createAnalyser();
-      analyser.fftSize = 4096;
+      analyser.fftSize = 4 * frequency_samples;
       analyser.smoothingTimeConstant = 0.3;
 
       navigator.mediaDevices
@@ -42,12 +42,11 @@ const Spectogram3D = () => {
 
         // Connect the analyzer to the geometry update
         const updateAudioData = () => {
-          analyser.getByteFrequencyData(DATA); // Get frequency data into DATA
+          analyser.getByteFrequencyData(DATA);
 
           requestAnimationFrame(updateAudioData);
           if (DATA) {
-            //console.log("DATA in Spectogram: ", DATA);
-            update_geometry(DATA, heights, mesh); // Pass DATA to update_geometry if it's valid
+            update_geometry(DATA, heights, mesh);
           }
         };
 
@@ -56,13 +55,11 @@ const Spectogram3D = () => {
     }
 
     return () => {
-      // console.log("Cleaning up microphone source");
       if (!isMicOn && audioContext) {
         audioContext.close();
         setColor(mesh, 0x220033);
       }
       if (source) {
-        // console.log("Disconnecting source");
         source.disconnect();
       }
     };
@@ -72,9 +69,7 @@ const Spectogram3D = () => {
     setIsMicOn((prev) => !prev);
   }, []);
 
-  useEffect(() => {
-    // console.log("isMicOn: ", isMicOn);
-  }, [isMicOn]);
+  useEffect(() => {}, [isMicOn]);
 
   return (
     <div className="felx flex-col ">
