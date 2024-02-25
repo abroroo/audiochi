@@ -26,8 +26,8 @@ const Spectogram3D = () => {
     if (isMicOn && isInitialized) {
       audioContext = new AudioContext();
       analyser = audioContext.createAnalyser();
-      analyser.fftSize = 4096;
-      analyser.smoothingTimeConstant = 0.3;
+      analyser.fftSize = 4 * frequency_samples;
+      analyser.smoothingTimeConstant = 0.5;
 
       navigator.mediaDevices
         .getUserMedia({ audio: { echoCancellation: false } })
