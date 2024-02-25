@@ -84,13 +84,13 @@ const Spectogram3D = () => {
           <button
             className="button-28"
             style={{
-              width: "100px",
-              minHeight: "25px",
+              width: "120px",
+              minHeight: "50px",
               marginLeft: "10px",
               padding: "2px",
             }}
           >
-            View in 2D
+            View in 2D &#10548;
           </button>
         </Link>
       </div>

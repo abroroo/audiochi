@@ -113,17 +113,16 @@ const Spectrogram = () => {
           <h1 data-test="spectogram-title" className="">
             Sound Recognition
           </h1>
-          <Link href="/in3D">
+          <Link href="/viewIn3D">
             <button
               className="button-28"
               style={{
-                width: "100px",
-                minHeight: "25px",
+                width: "120px",
+                minHeight: "50px",
                 marginLeft: "10px",
-                padding: "2px",
               }}
             >
-              View in 3D
+              View in 3D &#10548;
             </button>
           </Link>
         </div>
