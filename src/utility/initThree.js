@@ -107,7 +107,7 @@ export function initThreeJS() {
 
 export function update_geometry(DATA, heights, mesh) {
     if (!heights || !mesh) return;
-    //console.log("DATA in ThreeINIT: ", DATA);
+
     let start_val = frequency_samples + 1;
     let end_val = n_vertices - start_val;
     heights.copyWithin(0, start_val, n_vertices + 1);
