@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { initThreeJS, update_geometry, setColor } from "../utility/initThree";
 import GoogleAudio from "./GoogleAudio";
+import Link from "next/link";
 
 const Spectogram3D = () => {
   const frequency_samples = 128; // Y resolution
@@ -76,15 +77,53 @@ const Spectogram3D = () => {
   }, [isMicOn]);
 
   return (
-    <div className="">
-      <div className="flex flex-col justify-center items-center mt-2">
-        <h1 className="mb-5">3D Spectogram</h1>
-        <button className="button-28 " onClick={toggleMicrophone}>
-          {isMicOn ? "Turn off " : "Turn on "}
-        </button>
+    <div className="felx flex-col ">
+      <div className="flex items-center justify-center">
+        <h1 className="mt-2">3D Spectogram</h1>
+        <Link href="/">
+          <button
+            className="button-28"
+            style={{
+              width: "100px",
+              minHeight: "25px",
+              marginLeft: "10px",
+              padding: "2px",
+            }}
+          >
+            View in 2D
+          </button>
+        </Link>
       </div>
+      <div className="flex flex-col md:flex-row   ">
+        {" "}
+        <div className="flex flex-col justify-center items-center  w-full mt-5">
+          <p
+            data-test="spectogram-p-text"
+            className=" mb-5 text-sm text-[#fff] w-[90%] md:flex hidden items-center justify-center"
+          >
+            It visualizes audio patterns in a 3D space, with color indicating
+            volume and brightness reflecting pitch. (more volume more frequency
+            & more bright the color lower the pitch of the voice).
+          </p>
+          <button className="button-28 " onClick={toggleMicrophone}>
+            {isMicOn ? "Stop " : "Visualize in 3D"}
+          </button>
+        </div>
+        {/* <div className="w-full md:w-[50%]">
+          <GoogleAudio />
+        </div> */}
+      </div>
+
       <div id="spectogram3js" className=""></div>
-      <GoogleAudio />
+      <p
+        data-test="author-tag"
+        className="text-xs text-[#646363] absolute bottom-5 w-full  left-0 flex  justify-center"
+      >
+        by
+        <a target="_blank" href="https://github.com/abroroo" className="ml-1">
+          abroro
+        </a>
+      </p>
     </div>
   );
 };
