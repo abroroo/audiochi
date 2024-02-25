@@ -4,8 +4,9 @@
 
 html,
 body {
-  background-color: hsl(280, 100%, 10%);
+  background-color: #220033;
   font-family: "Roboto", sans-serif;
+  /* hsl(280, 100%, 10%); */
 }
 h1 {
   font-size: xxx-large;

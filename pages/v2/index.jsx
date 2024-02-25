@@ -1,11 +1,11 @@
 import React from "react";
-import ThreeJSSpectogram from "../../src/components/ThreeJSSpectogram";
+import Spectogram3D from "../../src/components/Spectogram3D";
 import "../../src/app/globals.css";
 
 const VersionTwo = () => {
   return (
     <>
-      <ThreeJSSpectogram />
+      <Spectogram3D />
     </>
   );
 };
