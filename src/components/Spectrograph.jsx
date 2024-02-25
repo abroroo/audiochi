@@ -113,7 +113,7 @@ const Spectrogram = () => {
           <h1 data-test="spectogram-title" className="">
             Sound Recognition
           </h1>
-          <Link href="/v2">
+          <Link href="/in3D">
             <button
               className="button-28"
               style={{
