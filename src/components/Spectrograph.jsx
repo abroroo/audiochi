@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import GoogleAudio from "./GoogleAudio";
+import Link from "next/link";
 
 const Spectrogram = () => {
   const canvasRef = useRef(null);
@@ -108,9 +109,24 @@ const Spectrogram = () => {
   return (
     <div data-test="spectogram-container">
       <div className="h1-div flex justify-center items-center flex-col">
-        <h1 data-test="spectogram-title" className="">
-          Sound Recognition
-        </h1>
+        <div className="flex items-center justify-center">
+          <h1 data-test="spectogram-title" className="">
+            Sound Recognition
+          </h1>
+          <Link href="/viewIn3D">
+            <button
+              className="button-28"
+              style={{
+                width: "120px",
+                minHeight: "50px",
+                marginLeft: "10px",
+              }}
+            >
+              View in 3D &#10548;
+            </button>
+          </Link>
+        </div>
+
         <p
           data-test="spectogram-title-text"
           className=" m-0 text-sm text-[#fff] w-[90%]"
@@ -122,7 +138,7 @@ const Spectrogram = () => {
       <div className="button-div md:top-[25%] top-[33%] xl:top-[20%] flex items-center justify-center flex-col">
         <p
           data-test="spectogram-p-text"
-          className=" m-5 text-sm text-[#fff] w-[90%]"
+          className=" m-5 text-sm text-[#fff] w-[90%] md:flex hidden items-center justify-center"
         >
           It can visualize audio as frequency of sound patterns (more red
           greater the frequency). To check if it's working you can start with

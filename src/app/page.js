@@ -1,4 +1,5 @@
 
+import Script from "next/script";
 import Head from "next/head";
 import Spectrogram from "../components/Spectrograph";
 
@@ -30,8 +31,10 @@ const Home = () => {
 
       </Head>
       <Spectrogram />
-      <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+
+      <Script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js" />
+      <Script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js" />
+
     </div>
   );
 };

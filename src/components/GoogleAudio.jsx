@@ -55,11 +55,11 @@ const GoogleAudio = () => {
   return (
     <div
       data-test="sound-prediction-container"
-      className="text-[#fff] mt-10 flex items-center justify-center flex-col w-full"
+      className="text-[#fff]  flex items-center justify-center flex-col w-full "
     >
       <p
         data-test="sound-prediction-into-p-text"
-        className="my-5 text-sm text-[#fff] w-[90%]"
+        className="my-5 text-sm text-[#fff] w-[full] items-center justify-center md:flex hidden"
       >
         With a concept of transfer learning. It can also predict your audio
         activity based on the classes it is trained
@@ -85,7 +85,7 @@ const GoogleAudio = () => {
         </button>
       )}
 
-      <div id="label-container" className="m-10 grid gap-2"></div>
+      <div id="label-container" className="m-10 grid gap-2  "></div>
     </div>
   );
 };
