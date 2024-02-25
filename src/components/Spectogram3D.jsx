@@ -27,7 +27,7 @@ const Spectogram3D = () => {
       audioContext = new AudioContext();
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 4 * frequency_samples;
-      analyser.smoothingTimeConstant = 0.5;
+      analyser.smoothingTimeConstant = 0.3;
 
       navigator.mediaDevices
         .getUserMedia({ audio: { echoCancellation: false } })
