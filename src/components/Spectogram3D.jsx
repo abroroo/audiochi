@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { initThreeJS, update_geometry, setColor } from "../utility/initThree";
+import GoogleAudio from "./GoogleAudio";
 
 const Spectogram3D = () => {
   const frequency_samples = 128; // Y resolution
@@ -54,13 +55,13 @@ const Spectogram3D = () => {
     }
 
     return () => {
-      console.log("Cleaning up microphone source");
+      // console.log("Cleaning up microphone source");
       if (!isMicOn && audioContext) {
         audioContext.close();
         setColor(mesh, 0x220033);
       }
       if (source) {
-        console.log("Disconnecting source");
+        // console.log("Disconnecting source");
         source.disconnect();
       }
     };
@@ -71,7 +72,7 @@ const Spectogram3D = () => {
   }, []);
 
   useEffect(() => {
-    console.log("isMicOn: ", isMicOn);
+    // console.log("isMicOn: ", isMicOn);
   }, [isMicOn]);
 
   return (
@@ -83,6 +84,7 @@ const Spectogram3D = () => {
         </button>
       </div>
       <div id="spectogram3js" className=""></div>
+      <GoogleAudio />
     </div>
   );
 };

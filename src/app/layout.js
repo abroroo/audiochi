@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google'
+import Head from "next/head";
 import './globals.css'
 
 
@@ -12,8 +13,17 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <Head>
+        <title>{metadata.title}</title>
+        <meta name="description" content={metadata.description} />
 
-      <body className={inter.className}>{children}</body>
+
+      </Head>
+      <body className={inter.className}>{children}
+
+
+
+      </body>
 
     </html>
   )
