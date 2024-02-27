@@ -73,8 +73,8 @@ const Spectogram3D = () => {
 
   return (
     <div className="felx flex-col ">
-      <div className="flex items-center justify-center">
-        <h1 className="mt-2">3D Spectogram</h1>
+      <div className="flex items-center justify-center mt-2">
+        <h1 className="mt-2">3D Spectrogram</h1>
         <Link href="/">
           <button
             className="button-28"
@@ -98,7 +98,7 @@ const Spectogram3D = () => {
           >
             It visualizes audio patterns in a 3D space, with color indicating
             volume and brightness reflecting pitch. (more volume more frequency
-            & more bright the color lower the pitch of the voice).
+            of sound).
           </p>
           <button className="button-28 " onClick={toggleMicrophone}>
             {isMicOn ? "Stop " : "Visualize in 3D"}
