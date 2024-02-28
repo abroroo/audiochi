@@ -3,7 +3,7 @@ import vertexShader from "./vertexshader";
 import fragmentShader from "./fragmentshader";
 
 const frequency_samples = 128; // Y resolution
-const time_samples = 1200; // X resolution
+const time_samples = 1000; // X resolution
 const n_vertices = (frequency_samples + 1) * (time_samples + 1);
 const xsegments = time_samples;
 const ysegments = frequency_samples;
@@ -43,7 +43,7 @@ export function initThreeJS() {
 
     let ypow_max = Math.log(ysize);
     let ybase = Math.E;
-    // generate vertices and color data for a simple grid geometry
+    // move each grid one cell to the left (scrolling effect)
     for (let i = 0; i <= xsegments; i++) {
         let x = i * xsegmentSize - xhalfSize;
         for (let j = 0; j <= ysegments; j++) {
@@ -77,6 +77,7 @@ export function initThreeJS() {
             indices.push(b, c, d); // face two
         }
     }
+
 
     geometry.setIndex(indices);
 
