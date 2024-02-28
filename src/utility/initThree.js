@@ -66,6 +66,7 @@ export function initThreeJS() {
         new THREE.Uint8BufferAttribute(heights, 1)
     );
 
+    // Draw trainagles on each grid cell 
     for (let i = 0; i < xsegments; i++) {
         for (let j = 0; j < ysegments; j++) {
             let a = i * (ysegments + 1) + (j + 1);

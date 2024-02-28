@@ -262,9 +262,9 @@ varying vec3 vColor;
 void main(){
 int index = int(displacement);
     vColor = vLut[index];
-vColor.x = (vColor.x*255.-49.)/206.;
-vColor.y = (vColor.y*255.-19.)/236.;
-vColor.z = (vColor.z*255.-50.)/190.;
+vColor.x = (vColor.x*255.-19.)/206.;
+vColor.y = (vColor.y*255.-30.)/236.;
+vColor.z = (vColor.z*255.-15.)/190.;
 
 vec3 osition = position + normal*displacement/25.5;
 gl_Position = projectionMatrix * modelViewMatrix * vec4(osition,1.0);
