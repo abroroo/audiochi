@@ -1,66 +1,44 @@
 version: 2.1
 orbs:
   node: circleci/node@5
+
+executors:
+  node22:
+    docker:
+      - image: cimg/node:22.11
+
 jobs:
-  test-node:
-    # Installs node dependencies and run tests
-    executor: node/default
+  test:
+    executor: node22
     environment:
+      CYPRESS_INSTALL_BINARY: "0" # unit tests don't need the Cypress binary
       JEST_JUNIT_OUTPUT_DIR: ./test-results/
-      VERCEL_ORG_ID: $VERCEL_ORG_ID
-      VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID
     steps:
       - checkout
       - node/install-packages:
           pkg-manager: npm
       - run:
-          name: Print node install help instructions
-          command: |-
-            echo "Jest tests have failed"
-          when: on_fail
-      - run:
-          command: npm install jest-junit
-      - run:
-          name: Run tests
-          command: npm run test --ci --runInBand --reporters=default --reporters=jest-junit
+          name: Unit tests
+          command: npm run test:ci
       - store_test_results:
           path: ./test-results/
 
-  build-node:
-    # Builds node project
-    executor: node/default
+  build:
+    executor: node22
+    environment:
+      CYPRESS_INSTALL_BINARY: "0"
     steps:
       - checkout
       - node/install-packages:
           pkg-manager: npm
       - run:
-          name: Print node install help instructions
-          command: |-
-            echo "Node build has failed"
-          when: on_fail
-      - run:
+          name: Production build
           command: npm run build
-      - run:
-          name: Create the ~/artifacts directory if it doesn't exist
-          command: mkdir -p ~/artifacts
-      # Copy output to artifacts dir
-      - run:
-          name: Copy artifacts
-          command: cp -R build dist public .output .next .docusaurus ~/artifacts 2>/dev/null || true
-      - store_artifacts:
-          path: ~/artifacts
-          destination: node-build
 
   preview_deployment:
-    docker:
-      - image: cimg/node:18.19.0
+    executor: node22
     steps:
       - checkout
-      - run:
-          name: Debug Print
-          command: |
-            echo "VERCEL_ORG_ID: $VERCEL_ORG_ID"
-            echo "VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID"
       - run:
           name: Install Vercel CLI
           command: npm install vercel@latest
@@ -75,8 +53,7 @@ jobs:
           command: npx vercel deploy --prebuilt --token=$VERCELTOKEN_FOR_CIRCLE_CI
 
   production_deployment:
-    docker:
-      - image: cimg/node:18.19.0
+    executor: node22
     steps:
       - checkout
       - run:
@@ -95,19 +72,19 @@ jobs:
 workflows:
   build-and-test:
     jobs:
-      - test-node
-      - build-node:
+      - test
+      - build:
           requires:
-            - test-node
+            - test
       - preview_deployment:
           requires:
-            - build-node
+            - build
           filters:
             branches:
               ignore: /main/
       - production_deployment:
           requires:
-            - build-node
+            - build
           filters:
             branches:
               only: /main/
