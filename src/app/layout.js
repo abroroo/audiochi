@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 const SITE_URL = "https://audiochi.vercel.app";
 const TITLE = "Audiochi: Real-time Sound Recognition in the Browser";
 const DESCRIPTION =
-  "Live spectrogram, 3D sound landscape and on-device sound classification, all running in your browser with Web Audio, WebGL and TensorFlow.js.";
+  "Live spectrogram, 3D sound landscape and a sound classifier I trained myself, all running on-device in your browser.";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),

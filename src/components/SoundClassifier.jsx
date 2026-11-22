@@ -1,100 +1,22 @@
 "use client";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
+import useLiveClassifier from "../hooks/useLiveClassifier";
+import { topK } from "../ml/classifier";
 
-// Teachable Machine export, fine-tuned on top of TF.js speech-commands.
-const MODEL_BASE_URL = "https://storage.googleapis.com/tm-model/gkl9L4FLn/";
+const TOP_N = 5;
 
-/**
- * Live sound classification with the TF.js speech-commands recognizer.
- * Expects the `speechCommands` global from the CDN scripts loaded by the page.
- */
+/** Live ESC-50 sound classification with Audiochi's own int8 ONNX model. */
 const SoundClassifier = () => {
-  // "idle" | "loading" | "listening" | "error"
-  const [status, setStatus] = useState("idle");
-  const [error, setError] = useState(null);
-  const [labels, setLabels] = useState([]);
-  const [scores, setScores] = useState([]);
-
-  const recognizerRef = useRef(null);
-  const mountedRef = useRef(true);
-
-  const stopListening = useCallback(async () => {
-    const recognizer = recognizerRef.current;
-    if (recognizer?.isListening()) {
-      try {
-        await recognizer.stopListening();
-      } catch {
-        // Already stopped; nothing to release.
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      stopListening();
-    };
-  }, [stopListening]);
-
-  const loadRecognizer = useCallback(async () => {
-    if (recognizerRef.current) return recognizerRef.current;
-    if (typeof window.speechCommands === "undefined") {
-      throw new Error("The speech model library didn't load. Check your connection and refresh the page.");
-    }
-    const recognizer = window.speechCommands.create(
-      "BROWSER_FFT",
-      undefined,
-      `${MODEL_BASE_URL}model.json`,
-      `${MODEL_BASE_URL}metadata.json`
-    );
-    await recognizer.ensureModelLoaded();
-    recognizerRef.current = recognizer;
-    return recognizer;
-  }, []);
-
-  const start = useCallback(async () => {
-    setError(null);
-    setStatus("loading");
-    try {
-      const recognizer = await loadRecognizer();
-      if (!mountedRef.current) return;
-      const wordLabels = recognizer.wordLabels();
-      setLabels(wordLabels);
-      setScores(new Array(wordLabels.length).fill(0));
-
-      await recognizer.listen(
-        async (result) => {
-          if (mountedRef.current) setScores(Array.from(result.scores));
-        },
-        // Report every frame (including background noise) so the bars always reflect the live scores.
-        { probabilityThreshold: 0, invokeCallbackOnNoiseAndUnknown: true, overlapFactor: 0.5 }
-      );
-      if (mountedRef.current) setStatus("listening");
-    } catch (err) {
-      if (!mountedRef.current) return;
-      setError(
-        err?.name === "NotAllowedError"
-          ? "Microphone access was blocked. Allow it in your browser's site settings and try again."
-          : err?.message || "Couldn't start the sound model."
-      );
-      setStatus("error");
-    }
-  }, [loadRecognizer]);
-
-  const stop = useCallback(async () => {
-    await stopListening();
-    setStatus("idle");
-  }, [stopListening]);
-
-  const topIndex = scores.length ? scores.indexOf(Math.max(...scores)) : -1;
-  const isBusy = status === "loading";
+  const { status, error, result, events, labels, start, stop } = useLiveClassifier();
   const isListening = status === "listening";
+  const isBusy = status === "loading";
+  const top = result ? topK(result.probs, TOP_N) : [];
 
   return (
     <div data-test="sound-prediction-container" className="flex w-full flex-col items-center justify-center text-white">
       <p data-test="sound-prediction-intro" className="my-5 max-w-xl text-center text-sm">
-        A transfer-learned model recognizes sounds like claps, snaps and &quot;shhh&quot; in real time.
+        A CNN I trained on ESC-50 recognizes 50 everyday sounds (dogs, rain, keyboards, clapping and more),
+        running fully in your browser.
       </p>
 
       <button
@@ -114,27 +36,54 @@ const SoundClassifier = () => {
         </p>
       )}
 
-      {labels.length > 0 && (
-        <ul data-test="label-container" aria-live="polite" className="mt-6 grid w-full max-w-sm gap-2">
-          {labels.map((label, i) => {
-            const pct = Math.round((scores[i] ?? 0) * 100);
-            const isTop = i === topIndex && isListening;
-            return (
-              <li key={label} className={`text-sm ${isTop ? "font-semibold" : "opacity-80"}`}>
-                <div className="flex justify-between">
-                  <span>{label}</span>
-                  <span className="tabular-nums">{pct}%</span>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/15">
-                  <div
-                    className={`h-full rounded transition-[width] duration-150 ${isTop ? "bg-orange-400" : "bg-white/60"}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+      {isListening && (
+        <div className="mt-6 w-full max-w-sm">
+          {!result ? (
+            <p className="text-center text-sm opacity-80">Listening…</p>
+          ) : (
+            <>
+              <ul
+                data-test="label-container"
+                aria-live="polite"
+                className={`grid gap-2 transition-opacity ${result.quiet ? "opacity-40" : ""}`}
+              >
+                {top.map((i, rank) => {
+                  const pct = Math.round(result.probs[i] * 100);
+                  return (
+                    <li key={labels[i]} className={`text-sm ${rank === 0 ? "font-semibold" : "opacity-80"}`}>
+                      <div className="flex justify-between capitalize">
+                        <span>{labels[i]}</span>
+                        <span className="tabular-nums">{pct}%</span>
+                      </div>
+                      <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/15">
+                        <div
+                          className={`h-full rounded transition-[width] duration-200 ${rank === 0 ? "bg-orange-400" : "bg-white/60"}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-3 text-center text-xs opacity-70" data-test="inference-stats">
+                {result.quiet ? "Too quiet. Make a sound." : `Inference ${result.ms.toFixed(0)} ms · int8 ONNX · on-device`}
+              </p>
+            </>
+          )}
+
+          {events.length > 0 && (
+            <div className="mt-4">
+              <h2 className="mb-1 text-xs uppercase tracking-wider opacity-70">Heard</h2>
+              <ol className="flex flex-wrap gap-2" data-test="event-list">
+                {events.map((e) => (
+                  <li key={e.at} className="rounded-full border border-white/30 px-3 py-1 text-xs capitalize">
+                    {e.label} <span className="tabular-nums opacity-70">{Math.round(e.prob * 100)}%</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

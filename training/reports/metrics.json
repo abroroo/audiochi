@@ -1,0 +1,155 @@
+{
+  "ablation": {
+    "baseline": {
+      "mean_acc": 0.8025,
+      "std_acc": 0.015572411502397429,
+      "fold_acc": {
+        "1": 0.8125,
+        "2": 0.785,
+        "3": 0.7975,
+        "4": 0.8275,
+        "5": 0.79
+      },
+      "params": 1251284,
+      "live_2s_acc": 0.7105,
+      "live_2s_std": 0.0329165611812656
+    },
+    "augment": {
+      "mean_acc": 0.7645000000000001,
+      "std_acc": 0.037795502377928517,
+      "fold_acc": {
+        "1": 0.725,
+        "2": 0.74,
+        "3": 0.8275,
+        "4": 0.7875,
+        "5": 0.7425
+      },
+      "params": 1251284,
+      "live_2s_acc": 0.7230000000000001,
+      "live_2s_std": 0.02984962311319861
+    },
+    "distill": {
+      "mean_acc": 0.763,
+      "std_acc": 0.017916472867168902,
+      "fold_acc": {
+        "1": 0.7475,
+        "2": 0.7475,
+        "3": 0.7925,
+        "4": 0.775,
+        "5": 0.7525
+      },
+      "params": 1251284,
+      "live_2s_acc": 0.7235,
+      "live_2s_std": 0.023162469643800938
+    },
+    "teacher": {
+      "mean_acc": 0.9175000000000001,
+      "std_acc": 0.020916500663351902,
+      "fold_acc": {
+        "1": 0.93,
+        "2": 0.94,
+        "3": 0.8975,
+        "4": 0.9325,
+        "5": 0.8875
+      },
+      "params": 80753666
+    }
+  },
+  "calibration": {
+    "temperature": 1.09965652329183,
+    "ece_before": 0.03289552998542786,
+    "ece_after": 0.023020450394600614
+  },
+  "pooled_accuracy": 0.763,
+  "pooled_top5_accuracy": 0.961,
+  "hardest_classes": [
+    [
+      "washing machine",
+      0.275
+    ],
+    [
+      "helicopter",
+      0.325
+    ],
+    [
+      "water drops",
+      0.425
+    ],
+    [
+      "laughing",
+      0.45
+    ],
+    [
+      "airplane",
+      0.45
+    ],
+    [
+      "hen",
+      0.525
+    ],
+    [
+      "wind",
+      0.525
+    ],
+    [
+      "engine",
+      0.55
+    ]
+  ],
+  "easiest_classes": [
+    [
+      "pouring water",
+      1.0
+    ],
+    [
+      "thunderstorm",
+      1.0
+    ],
+    [
+      "rooster",
+      0.975
+    ],
+    [
+      "door wood knock",
+      0.975
+    ],
+    [
+      "church bells",
+      0.975
+    ],
+    [
+      "sheep",
+      0.95
+    ],
+    [
+      "crying baby",
+      0.95
+    ],
+    [
+      "glass breaking",
+      0.95
+    ]
+  ],
+  "export": {
+    "fp32": {
+      "fold5_acc_5s": 0.7525,
+      "fold5_acc_live_2s": 0.725,
+      "size_mb": 5.007404,
+      "cpu_latency_ms_2s_window": {
+        "p50": 15.373479500340181,
+        "p95": 16.76507499687432
+      }
+    },
+    "int8": {
+      "fold5_acc_5s": 0.7625,
+      "fold5_acc_live_2s": 0.7225,
+      "size_mb": 1.296635,
+      "cpu_latency_ms_2s_window": {
+        "p50": 4.6326044994202675,
+        "p95": 4.7691309486253886
+      }
+    },
+    "torch_vs_onnx_fp32_max_abs_diff": 5.936622619628906e-05,
+    "shipped_size_mb": 1.296635
+  }
+}
