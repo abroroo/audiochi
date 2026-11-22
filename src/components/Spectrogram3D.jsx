@@ -2,14 +2,17 @@
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import useMicAnalyser from "../hooks/useMicAnalyser";
-import { createSpectrogram3D, FREQUENCY_SAMPLES } from "../utility/spectrogram3d";
+import { createSpectrogram3D, fillRow, FREQUENCY_SAMPLES, smoothRow, terrainRowMap } from "../utility/spectrogram3d";
+import { createStepClock } from "../utility/frameClock";
 
-// fftSize = 4 × samples gives 2 × samples bins; the view shows the lower half (≈0–11 kHz).
+// 1024 bins (~23 Hz each at 48 kHz) resampled onto 129 mel rows: smooth low end, sharp highs.
+// Browser voice processing is off so the terrain shows the room as it is.
 const MIC_OPTIONS = {
-  fftSize: 4 * FREQUENCY_SAMPLES,
-  smoothingTimeConstant: 0.3,
-  audioConstraints: { echoCancellation: false },
+  fftSize: 2048,
+  smoothingTimeConstant: 0.2, // light; smoothRow does the shaping
+  audioConstraints: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
 };
+const STEPS_PER_SECOND = 60;
 
 const Spectrogram3D = () => {
   const containerRef = useRef(null);
@@ -39,11 +42,18 @@ const Spectrogram3D = () => {
       return undefined;
     }
     const data = new Uint8Array(analyser.frequencyBinCount);
+    const rowMap = terrainRowMap(data.length, analyser.context?.sampleRate ?? 48000);
+    const row = new Uint8Array(FREQUENCY_SAMPLES + 1);
+    const smoothState = new Float32Array(row.length);
+    const steps = createStepClock(STEPS_PER_SECOND);
     let frameId = 0;
-    const tick = () => {
+    const tick = (now) => {
       frameId = requestAnimationFrame(tick);
+      const n = steps(now ?? performance.now());
+      if (n === 0) return;
       analyser.getByteFrequencyData(data);
-      viewRef.current?.update(data);
+      smoothRow(fillRow(row, data, rowMap), smoothState);
+      for (let i = 0; i < n; i++) viewRef.current?.update(row);
     };
     tick();
     return () => cancelAnimationFrame(frameId);

@@ -4,9 +4,18 @@ import Link from "next/link";
 import useMicAnalyser from "../hooks/useMicAnalyser";
 import { createFileSource } from "../audio/fileSource";
 import { buildLoudnessLut, buildRowMap, freqToY, paintColumn } from "../utility/spectrogramColors";
+import { createStepClock } from "../utility/frameClock";
 import SoundClassifier from "./SoundClassifier";
 
 const FFT_SIZE = 4096; // 2048 frequency bins
+// No smoothing across frames: a spectrogram should show onsets (claps, clicks) sharply.
+// Browser voice processing would hide steady sounds like "shhh", so it is off too.
+const MIC_OPTIONS = {
+  fftSize: FFT_SIZE,
+  smoothingTimeConstant: 0,
+  audioConstraints: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+};
+const PIXELS_PER_SECOND = 60;
 const LUT = buildLoudnessLut();
 const SILENCE = `rgb(${LUT[0]}, ${LUT[1]}, ${LUT[2]})`;
 const TICKS = [
@@ -25,7 +34,7 @@ function fitCanvas(canvas) {
 const Spectrogram = () => {
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
-  const { status, error, analyser, start, stop } = useMicAnalyser({ fftSize: FFT_SIZE });
+  const { status, error, analyser, start, stop } = useMicAnalyser(MIC_OPTIONS);
   const [height, setHeight] = useState(0);
   const [file, setFile] = useState(null); // playing file source, shared with the classifier
   const [fileError, setFileError] = useState(null);
@@ -99,22 +108,25 @@ const Spectrogram = () => {
     const ctx = canvas.getContext("2d");
     const frequencyData = new Uint8Array(analyser.frequencyBinCount);
     const sampleRate = analyser.context?.sampleRate ?? 48000;
+    const steps = createStepClock(PIXELS_PER_SECOND);
     let column = null;
     let rowMap = null;
     let frameId = 0;
 
-    const draw = () => {
+    const draw = (now) => {
       frameId = requestAnimationFrame(draw);
+      const n = steps(now ?? performance.now());
+      if (n === 0) return;
       const { width, height: h } = canvas;
       if (!column || column.height !== h) {
         column = ctx.createImageData(1, h);
         rowMap = buildRowMap(h, frequencyData.length, sampleRate);
       }
 
-      ctx.drawImage(canvas, -1, 0);
+      ctx.drawImage(canvas, -n, 0);
       analyser.getByteFrequencyData(frequencyData);
       paintColumn(frequencyData, column.data, LUT, rowMap);
-      ctx.putImageData(column, width - 1, 0);
+      for (let i = n; i >= 1; i--) ctx.putImageData(column, width - i, 0);
     };
     draw();
 
