@@ -2,15 +2,19 @@
 
 **Real-time sound recognition and visualization, running entirely in the browser.**
 
-[Live demo →](https://audiochi.vercel.app) · [3D view →](https://audiochi.vercel.app/viewIn3D)
+[Live demo →](https://audiochi.vercel.app) · [3D view →](https://audiochi.vercel.app/viewIn3D) · [Sound map →](https://audiochi.vercel.app/explore)
 
 ![Audiochi live spectrogram](public/images/og_image.jpg)
 
-Audiochi listens through your microphone and does three things at once:
+Audiochi listens through your microphone and shows what it hears:
 
 - **Scrolling spectrogram.** A 2D frequency-over-time view drawn on canvas from a 4096-point FFT.
 - **3D sound landscape.** A 1000 × 128 vertex terrain built with three.js. A custom GLSL shader raises and colors each vertex by loudness.
 - **Sound classification.** A 1.3M-parameter CNN that I trained on ESC-50 recognizes 50 everyday sounds live. It runs as a 1.3 MB int8 ONNX model in the browser.
+- **"I don't know that one."** Speech, music and other sounds outside the 50 classes are flagged instead of mislabelled. The detector was chosen by a small out-of-distribution study.
+- **Teach it a new sound.** Record a sound 3–5 times and it is recognized from then on. This is few-shot learning in the model's embedding space, with no retraining and no upload.
+- **What did it listen to?** An occlusion-saliency heatmap over the spectrogram shows which time and frequency regions drove the prediction.
+- **Sound map.** A 3D UMAP galaxy of all 2,000 training clips as the model sees them, with your live sound moving through it.
 
 No audio leaves the device. All processing runs client-side with the Web Audio API, WebGL and onnxruntime-web.
 
@@ -53,6 +57,16 @@ The model is trained, evaluated and quantized by the pipeline in [`training/`](t
 
 The pipeline has a full ablation, a confusion matrix, failure analysis and a model card. See [training/README.md](training/README.md).
 
+### On top of the model: embeddings
+
+The ONNX model also outputs its 256-d embedding, and the browser projects it into a PCA space shipped with the app (`src/ml/space.js`). That one space powers four features:
+- the 3D sound map (UMAP);
+- the speech reject prototype;
+- few-shot "teach a sound" (`src/ml/fewshot.js`);
+- placement of the live marker.
+
+Unknown sounds are detected with an energy score. I picked it over max-softmax and k-NN distance after a study on held-out speech and tones. That study also caught a leakage bug that had made k-NN look best ([details](training/README.md#beyond-the-50-classes-embedding-space-unknown-sounds-few-shot)). Saliency is occlusion-based: 80 masked copies of the window run as one ONNX batch (`src/ml/saliency.js`).
+
 <details>
 <summary>v1 (2024): Teachable Machine</summary>
 
@@ -64,7 +78,7 @@ The first version fine-tuned Google's speech-commands CNN in Teachable Machine o
 
 **Web:** Next.js 16 · React 19 · Web Audio API + AudioWorklet · three.js + GLSL · onnxruntime-web · Tailwind CSS · Jest · Cypress · CircleCI → Vercel
 
-**ML:** PyTorch · PANNs CNN14 · scikit-learn · ONNX + onnxruntime quantization · librosa · uv
+**ML:** PyTorch · PANNs CNN14 · scikit-learn · UMAP · ONNX + onnxruntime quantization · librosa · uv
 
 ## Run locally
 
@@ -75,7 +89,7 @@ npm test             # unit tests (Jest)
 npm run build && npm start   # then, in another terminal:
 npm run e2e          # Cypress, with a fake microphone in Chromium
 
-cd training && make all   # retrain the model from scratch (~1.5 h on an M2 Pro)
+cd training && make all   # retrain the model and rebuild the embedding space (~1.5 h on an M2 Pro, macOS for TTS)
 ```
 
 Requires Node 20.9 or newer. Microphone access needs `localhost` or HTTPS.
@@ -84,5 +98,5 @@ Requires Node 20.9 or newer. Microphone access needs `localhost` or HTTPS.
 
 - [x] **Phase 0: foundations.** Leak-free audio lifecycle, error and loading states, shared mic hook, App Router only, social preview metadata, meaningful tests, dependency cleanup.
 - [x] **Phase 1: own the model.** A PyTorch pipeline on ESC-50: log-mel front end with JS parity tests, a CNN14 teacher, an ablation over augmentation and distillation, int8 ONNX, calibration and a model card.
-- [ ] **Phase 2: ML features.** Teach a new sound in the browser (embeddings + few-shot classifier), a 3D embedding explorer (UMAP), saliency overlays showing what the model listened to, and unknown-sound detection.
+- [x] **Phase 2: ML features.** Teach a new sound in the browser (few-shot prototypes), a 3D embedding explorer (UMAP), occlusion saliency, and unknown-sound detection backed by an OOD study.
 - [ ] **Phase 3: visual polish.** Mel-frequency axis with labels, perceptual colormap, orbit controls and lighting in 3D, and file upload so the demo works without a microphone.

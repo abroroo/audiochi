@@ -60,5 +60,6 @@
   "nMels": 64,
   "fMin": 50.0,
   "fMax": 8000.0,
-  "cvAccuracy": 0.8425
+  "cvAccuracy": 0.8425,
+  "unknownEnergyThreshold": -5.4525
 }

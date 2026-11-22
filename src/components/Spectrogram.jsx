@@ -66,6 +66,9 @@ const Spectrogram = () => {
           <Link href="/viewIn3D" className="button-28 button-28--small">
             View in 3D &#10548;
           </Link>
+          <Link href="/explore" className="button-28 button-28--small">
+            Sound map &#10548;
+          </Link>
         </div>
 
         <p data-test="spectrogram-title-text" className="max-w-xl text-sm">
@@ -94,7 +97,7 @@ const Spectrogram = () => {
         <SoundClassifier />
       </main>
 
-      <footer data-test="author-tag" className="fixed bottom-4 left-0 w-full text-center text-xs text-[#a89bb3]">
+      <footer data-test="author-tag" className="absolute bottom-4 left-0 w-full text-center text-xs text-[#a89bb3]">
         by{" "}
         <a target="_blank" rel="noopener noreferrer" href="https://github.com/abroroo" className="underline">
           abroro

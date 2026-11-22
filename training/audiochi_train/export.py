@@ -67,6 +67,27 @@ def quantize(fp32_path, int8_path, calib_feats: np.ndarray) -> None:
     pre.unlink()
 
 
+EMBEDDING_TENSOR = "/Relu_output_0_DequantizeLinear_Output"  # penultimate layer, as the head sees it
+
+
+def add_embedding_output(path) -> None:
+    """Expose the 256-d penultimate embedding as a second output named "embedding".
+
+    The web app uses it for few-shot "teach a sound", unknown-sound detection and the 3D map.
+    Logits are unchanged. Idempotent.
+    """
+    model = onnx.load(path)
+    if any(o.name == "embedding" for o in model.graph.output):
+        return
+    if not any(EMBEDDING_TENSOR in n.output for n in model.graph.node):
+        raise RuntimeError(f"{EMBEDDING_TENSOR} not found; did the model architecture change?")
+    model.graph.node.append(onnx.helper.make_node("Identity", [EMBEDDING_TENSOR], ["embedding"]))
+    model.graph.output.append(
+        onnx.helper.make_tensor_value_info("embedding", onnx.TensorProto.FLOAT, ["batch", 256]))
+    onnx.checker.check_model(model)
+    onnx.save(model, path)
+
+
 def session(path) -> ort.InferenceSession:
     opts = ort.SessionOptions()
     opts.intra_op_num_threads = 1  # browsers without cross-origin isolation get one thread
@@ -75,7 +96,7 @@ def session(path) -> ort.InferenceSession:
 
 def onnx_logits(path, feats: np.ndarray) -> np.ndarray:
     sess = session(path)
-    return np.concatenate([sess.run(None, {"logmel": f[None]})[0] for f in feats])
+    return np.concatenate([sess.run(["logits"], {"logmel": f[None]})[0] for f in feats])
 
 
 def latency_ms(path, frames=LIVE_FRAMES, runs=200) -> dict:
@@ -147,6 +168,7 @@ def main() -> None:
     shipped = C.WEB_MODEL_DIR / "audiochi-esc50.int8.onnx"
     export_onnx(C.RUNS_DIR / "distill" / "final.pt", final_fp32)
     quantize(final_fp32, shipped, live_feats(rng.choice(len(data.labels), 300, replace=False)))
+    add_embedding_output(shipped)
 
     report = load_json(C.REPORTS_DIR / "metrics.json") if (C.REPORTS_DIR / "metrics.json").exists() else {}
     temperature = report.get("calibration", {}).get("temperature", 1.0)

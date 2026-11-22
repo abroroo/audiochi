@@ -62,6 +62,36 @@ The ONNX fp32 output matches PyTorch to within 6e-5. In the browser (onnxruntime
 
 The hardest classes are washing machine (38%), helicopter (53%), airplane (55%) and engine (60%): stationary, broadband machine noise. Top-5 accuracy is 98.0%.
 
+## Beyond the 50 classes: embedding space, unknown sounds, few-shot
+
+The shipped ONNX model has a second output, its 256-d penultimate **embedding**. Three web features are built on it, and so are two offline scripts:
+
+```bash
+make space     # embedding_space.py: PCA 256→64, UMAP 3D map, class centroids  -> public/models/*.space.json
+make ood-data  # make_speech.sh: 36 text-to-speech clips (macOS `say`) as out-of-set data
+make ood       # ood_study.py: compare unknown-sound scores, ship the winner's threshold + a speech prototype
+```
+
+**Sound map.** All 2,000 clips through the shipped int8 model, reduced to 3D with UMAP (cosine). The space is well organized by class: leave-one-out 10-NN accuracy is 95.3%. That number is in-sample, because the shipped model trained on these clips. The browser projects live audio into the same PCA space (golden-vector parity test) and places it among its nearest clips.
+
+**Unknown-sound detection: a study, not a guess.** A closed-set classifier labels everything as one of its 50 classes. I compared four standard scores for spotting sounds that are none of them. In-distribution data was a random 2 s window of each ESC-50 clip (n = 1,835 after the silence gate). Out-of-set data was text-to-speech (n = 106 windows) and synthetic tones, chords and melodies (n = 120).
+
+| Score | AUROC speech | AUROC tonal | Caught at 95% ESC-50 kept: speech | tonal |
+|---|---|---|---|---|
+| 1 − max softmax (Hendrycks & Gimpel, 2017) | **0.960** | 0.918 | 65% | 46% |
+| **Energy, −logsumexp (Liu et al., 2020): shipped** | 0.957 | **0.926** | **69%** | **55%** |
+| k-NN distance, embedding (Sun et al., 2022) | 0.933 | 0.871 | 40% | 19% |
+| k-NN distance, pooled conv features | 0.924 | 0.882 | 45% | 36% |
+
+- **A leakage bug I caught.** The first version of this study let an ESC-50 window match *another window of the same clip* in the k-NN bank. With that bug, k-NN looked best (AUROC 0.98 on speech). With self-matches excluded it came last. My first implementation used k-NN; this study is why the app uses energy instead.
+- **Threshold.** The app keeps 90% of ESC-50 windows as known. At that threshold it catches 100% of the TTS speech and 77% of the tonal sounds (`reports/ood_study.json` has the full trade-off curve).
+- **Speech prototype.** In live tests, speech still landed near *laughing*. So the app ships a "speech" reject prototype: the mean embedding of the TTS clips, matched the same way as a taught sound. Fitted on 6 voices and tested on the other 6, it caught 76% of the held-out speech windows. Only 0.27% of ESC-50 windows were mistaken for speech (5 windows: laughing and coughing).
+- **Caveats.** The out-of-set data is synthetic: TTS is not a real person in a real room. ESC-50 scores are in-sample.
+
+**Teach a sound (few-shot).** A user records a new sound 3–8 times. Its prototype is the normalized mean of the recordings' projected embeddings (prototypical networks, Snell et al., 2017). A live sound gets the taught label only if it is closer to that prototype than to every ESC-50 class centroid, and above a similarity floor (the 5th percentile of clip-to-own-centroid similarity). There is no training step, and nothing leaves the device.
+
+**Saliency.** Occlusion (Zeiler & Fergus, 2014). The log-mel window is split into a 10 × 8 grid, each cell is masked with the window mean, and all 80 variants run as one ONNX batch (about 2.7 s in WASM). A cell's weight is the resulting drop in the predicted class's probability.
+
 ## Model card
 
 - **Task:** single-label environmental sound classification, 50 ESC-50 classes.
@@ -70,7 +100,7 @@ The hardest classes are washing machine (38%), helicopter (53%), airplane (55%) 
 - **Input:** 2 s mono audio at 16 kHz, turned into a 201 × 64 log-mel spectrogram (computed in the browser).
 - **Output:** calibrated probabilities over 50 classes.
 - **Known limitations:**
-  - **Closed set.** Any sound gets mapped to one of the 50 classes, so silence and speech produce confident nonsense. The app gates on loudness; real open-set detection is on the roadmap.
+  - **Closed set.** The model itself maps any sound to one of the 50 classes. The app adds a loudness gate, an energy-score unknown detector and a speech prototype (see above), but these catch only part of what is out of set.
   - **Domain shift.** The clips are curated freesound recordings. Laptop microphones, room echo and browser audio processing differ. The app turns off echo cancellation, noise suppression and AGC to reduce this.
   - **Single-label.** Overlapping sounds are not modelled.
   - **Small dataset.** 40 clips per class, so confidence on rare real-world variants is unreliable.
@@ -82,6 +112,6 @@ The hardest classes are washing machine (38%), helicopter (53%), airplane (55%) 
 |---|---|
 | `audiochi_train/` | pipeline modules (see diagram) |
 | `tests/` | pytest: front-end parity vs torchlibrosa, model shape/size, augmentations |
-| `reports/` | `metrics.json`, confusion matrix, reliability diagram, top confusions |
-| `../public/models/` | shipped `audiochi-esc50.int8.onnx` plus metadata (labels, temperature) |
+| `reports/` | `metrics.json`, confusion matrix, reliability diagram, top confusions, `space.json`, `ood_study.json` |
+| `../public/models/` | shipped `audiochi-esc50.int8.onnx` (logits + embedding), metadata (labels, temperature, unknown threshold), embedding space |
 | `../src/ml/` | browser front end: log-mel, resampler, ONNX classifier, with Jest parity tests |

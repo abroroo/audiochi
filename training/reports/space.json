@@ -1,0 +1,7 @@
+{
+  "pca_dims": 64,
+  "pca_explained_variance": 0.935877799987793,
+  "onnx_live_2s_accuracy_in_sample": 0.966,
+  "knn_loo_accuracy_in_sample": 0.9525,
+  "caveat": "Shipped model was trained on these clips: numbers are in-sample."
+}

@@ -1,5 +1,5 @@
 # Audiochi training pipeline. Requires uv (https://docs.astral.sh/uv/).
-.PHONY: setup data teacher ablation evaluate export test all clean
+.PHONY: setup data teacher ablation evaluate export space ood-data ood test all clean
 
 setup:            ## create the Python environment
 	uv sync --group dev
@@ -21,10 +21,19 @@ evaluate:         ## ablation table, confusion matrix, calibration -> reports/
 export:           ## ONNX + int8 quantization + checks -> ../public/models/
 	uv run python -m audiochi_train.export
 
+space:            ## embedding space for the web app: PCA, UMAP 3D map, class centroids -> ../public/models/
+	uv run --group map python -m audiochi_train.embedding_space
+
+ood-data:         ## out-of-set speech clips from macOS text-to-speech (12 voices x 3 sentences)
+	./make_speech.sh
+
+ood:              ## compare unknown-sound scores, ship the best threshold and the speech prototype
+	uv run python -m audiochi_train.ood_study
+
 test:
 	uv run pytest -q
 
-all: setup data teacher ablation evaluate export
+all: setup data teacher ablation evaluate export space ood-data ood
 
 clean:            ## remove the environment, dataset, checkpoints and run outputs
 	rm -rf .venv .data runs

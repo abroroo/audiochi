@@ -1,16 +1,35 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import useLiveClassifier from "../hooks/useLiveClassifier";
 import { topK } from "../ml/classifier";
+import SaliencyView from "./SaliencyView";
+import TeachPanel from "./TeachPanel";
 
 const TOP_N = 5;
 
 /** Live ESC-50 sound classification with Audiochi's own int8 ONNX model. */
 const SoundClassifier = () => {
-  const { status, error, result, events, labels, start, stop } = useLiveClassifier();
+  const { status, error, result, events, labels, space, taught, start, stop, recordExample, forgetSound, explain } =
+    useLiveClassifier();
+  const [explanation, setExplanation] = useState(null);
+  const [explaining, setExplaining] = useState(false);
+  const [explainError, setExplainError] = useState(null);
   const isListening = status === "listening";
   const isBusy = status === "loading";
   const top = result ? topK(result.probs, TOP_N) : [];
+  const dimmed = result && (result.quiet || result.unknown);
+
+  const runExplain = async () => {
+    setExplaining(true);
+    setExplainError(null);
+    try {
+      setExplanation(await explain());
+    } catch (err) {
+      setExplainError(err.message || "Couldn't explain this prediction.");
+    } finally {
+      setExplaining(false);
+    }
+  };
 
   return (
     <div data-test="sound-prediction-container" className="flex w-full flex-col items-center justify-center text-white">
@@ -42,10 +61,24 @@ const SoundClassifier = () => {
             <p className="text-center text-sm opacity-80">Listening…</p>
           ) : (
             <>
+              {!result.quiet && result.taughtMatch && (
+                <p data-test="taught-match" className="mb-3 rounded border border-orange-400 px-3 py-2 text-center text-sm">
+                  Your sound: <strong>{result.taughtMatch.name}</strong>{" "}
+                  <span className="tabular-nums opacity-70">similarity {result.taughtMatch.sim.toFixed(2)}</span>
+                </p>
+              )}
+              {!result.quiet && result.unknown && (
+                <p data-test="unknown-sound" className="mb-3 rounded border border-white/30 px-3 py-2 text-center text-sm">
+                  {result.speech
+                    ? "Sounds like speech. Speech isn't one of the 50 sounds I learned."
+                    : "Not sure. This doesn't sound like any of the 50 sounds I learned."}
+                </p>
+              )}
               <ul
                 data-test="label-container"
+                data-energy={result.energy?.toFixed(2)}
                 aria-live="polite"
-                className={`grid gap-2 transition-opacity ${result.quiet ? "opacity-40" : ""}`}
+                className={`grid gap-2 transition-opacity ${dimmed ? "opacity-40" : ""}`}
               >
                 {top.map((i, rank) => {
                   const pct = Math.round(result.probs[i] * 100);
@@ -68,6 +101,19 @@ const SoundClassifier = () => {
               <p className="mt-3 text-center text-xs opacity-70" data-test="inference-stats">
                 {result.quiet ? "Too quiet. Make a sound." : `Inference ${result.ms.toFixed(0)} ms · int8 ONNX · on-device`}
               </p>
+              <div className="mt-2 flex justify-center">
+                <button
+                  type="button"
+                  className="button-28 button-28--small"
+                  onClick={runExplain}
+                  disabled={explaining || result.quiet}
+                  data-test="explain-button"
+                >
+                  {explaining ? "Explaining…" : "What did it listen to?"}
+                </button>
+              </div>
+              {explainError && <p role="alert" className="mt-2 text-center text-xs text-orange-300">{explainError}</p>}
+              {explanation && <SaliencyView explanation={explanation} />}
             </>
           )}
 
@@ -76,13 +122,18 @@ const SoundClassifier = () => {
               <h2 className="mb-1 text-xs uppercase tracking-wider opacity-70">Heard</h2>
               <ol className="flex flex-wrap gap-2" data-test="event-list">
                 {events.map((e) => (
-                  <li key={e.at} className="rounded-full border border-white/30 px-3 py-1 text-xs capitalize">
+                  <li
+                    key={e.at}
+                    className={`rounded-full border px-3 py-1 text-xs ${e.taught ? "border-orange-400" : "border-white/30 capitalize"}`}
+                  >
                     {e.label} <span className="tabular-nums opacity-70">{Math.round(e.prob * 100)}%</span>
                   </li>
                 ))}
               </ol>
             </div>
           )}
+
+          {space && <TeachPanel taught={taught} recordExample={recordExample} forgetSound={forgetSound} />}
         </div>
       )}
     </div>

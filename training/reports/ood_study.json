@@ -1,0 +1,84 @@
+{
+  "n": {
+    "esc50": 1835,
+    "speech": 106,
+    "tonal": 120
+  },
+  "auroc": {
+    "msp/speech": 0.96,
+    "msp/tonal": 0.918,
+    "energy/speech": 0.957,
+    "energy/tonal": 0.926,
+    "knn_embed/speech": 0.933,
+    "knn_embed/tonal": 0.871,
+    "knn_pooled/speech": 0.924,
+    "knn_pooled/tonal": 0.882
+  },
+  "tpr95_fpr": {
+    "msp/speech": 0.651,
+    "msp/tonal": 0.458,
+    "energy/speech": 0.689,
+    "energy/tonal": 0.55,
+    "knn_embed/speech": 0.396,
+    "knn_embed/tonal": 0.192,
+    "knn_pooled/speech": 0.453,
+    "knn_pooled/tonal": 0.358
+  },
+  "top_predictions": {
+    "speech": {
+      "laughing": 66,
+      "drinking sipping": 10,
+      "cow": 9,
+      "coughing": 7
+    },
+    "tonal": {
+      "siren": 79,
+      "clock alarm": 19,
+      "car horn": 18,
+      "cat": 1
+    }
+  },
+  "knn_embed_threshold_95": 0.3575,
+  "caveat": "Shipped model trained on all ESC-50 clips: in-distribution scores are in-sample.",
+  "speech_prototype": {
+    "heldout_voices_caught": 0.759,
+    "esc50_windows_called_speech": 0.0027,
+    "esc50_classes_most_called_speech": {
+      "laughing": 4,
+      "coughing": 1
+    }
+  },
+  "energy_tradeoff": [
+    {
+      "esc50_kept_as_known": 0.8,
+      "threshold": -6.675,
+      "speech_caught": 1.0,
+      "tonal_caught": 0.95
+    },
+    {
+      "esc50_kept_as_known": 0.85,
+      "threshold": -6.131,
+      "speech_caught": 1.0,
+      "tonal_caught": 0.858
+    },
+    {
+      "esc50_kept_as_known": 0.9,
+      "threshold": -5.452,
+      "speech_caught": 1.0,
+      "tonal_caught": 0.767
+    },
+    {
+      "esc50_kept_as_known": 0.95,
+      "threshold": -4.58,
+      "speech_caught": 0.689,
+      "tonal_caught": 0.55
+    }
+  ],
+  "shipped": {
+    "score": "energy",
+    "threshold": -5.4525,
+    "esc50_kept_as_known": 0.9,
+    "speech_caught": 1.0,
+    "tonal_caught": 0.767
+  }
+}

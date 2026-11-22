@@ -14,8 +14,13 @@ function mockHook(overrides = {}) {
     result: null,
     events: [],
     labels,
+    space: null,
+    taught: [],
     start: jest.fn(),
     stop: jest.fn(),
+    recordExample: jest.fn(),
+    forgetSound: jest.fn(),
+    explain: jest.fn(),
     ...overrides,
   };
   useLiveClassifier.mockReturnValue(value);
@@ -76,5 +81,55 @@ describe("SoundClassifier", () => {
     render(<SoundClassifier />);
     await act(async () => fireEvent.click(screen.getByRole("button", { name: /stop recognition/i })));
     expect(hook.stop).toHaveBeenCalled();
+  });
+
+  const listening = (result) => ({ status: "listening", result: { probs: [0.9, 0.1, 0, 0, 0, 0], ms: 5, quiet: false, ...result } });
+
+  it("says when a sound isn't one of the 50 classes", () => {
+    mockHook(listening({ unknown: true }));
+    render(<SoundClassifier />);
+    expect(screen.getByText(/not sure/i)).toBeInTheDocument();
+  });
+
+  it("says when it hears speech", () => {
+    mockHook(listening({ unknown: true, speech: true }));
+    render(<SoundClassifier />);
+    expect(screen.getByText(/sounds like speech/i)).toBeInTheDocument();
+  });
+
+  it("shows a match with a taught sound", () => {
+    mockHook(listening({ taughtMatch: { name: "my kettle", sim: 0.87 } }));
+    render(<SoundClassifier />);
+    expect(screen.getByText("my kettle")).toBeInTheDocument();
+    expect(screen.getByText(/0\.87/)).toBeInTheDocument();
+  });
+
+  it("explains the prediction on demand", async () => {
+    const explanation = {
+      logmel: { data: new Float32Array(4), frames: 2 }, cells: [], weights: new Float32Array(0),
+      label: "dog", nMels: 2, ms: 12,
+    };
+    const hook = mockHook({ ...listening(), explain: jest.fn(async () => explanation) });
+    render(<SoundClassifier />);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /what did it listen to/i })));
+    expect(hook.explain).toHaveBeenCalled();
+    expect(screen.getByRole("img", { name: /dog/i })).toBeInTheDocument();
+  });
+
+  it("records a taught sound and reports progress", async () => {
+    const hook = mockHook({ ...listening(), space: {}, recordExample: jest.fn(async () => 1) });
+    render(<SoundClassifier />);
+    fireEvent.change(screen.getByLabelText(/sound name/i), { target: { value: "my kettle" } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /record 1\/5/i })));
+    expect(hook.recordExample).toHaveBeenCalledWith("my kettle");
+    expect(screen.getByText(/2 more before it can be recognized/i)).toBeInTheDocument();
+  });
+
+  it("shows why a recording failed", async () => {
+    mockHook({ ...listening(), space: {}, recordExample: jest.fn(async () => { throw new Error("Too quiet."); }) });
+    render(<SoundClassifier />);
+    fireEvent.change(screen.getByLabelText(/sound name/i), { target: { value: "x" } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: /record/i })));
+    expect(screen.getByText("Too quiet.")).toBeInTheDocument();
   });
 });
