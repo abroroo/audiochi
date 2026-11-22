@@ -52,7 +52,7 @@
     "fireworks",
     "hand saw"
   ],
-  "temperature": 1.09965652329183,
+  "temperature": 1.0612078990919325,
   "windowSeconds": 2,
   "sampleRate": 16000,
   "nFft": 512,
@@ -60,5 +60,5 @@
   "nMels": 64,
   "fMin": 50.0,
   "fMax": 8000.0,
-  "cvAccuracy": 0.763
+  "cvAccuracy": 0.8425
 }

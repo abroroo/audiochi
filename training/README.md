@@ -29,36 +29,38 @@ The log-mel front end is written in plain torch ops so it can be ported line by 
 | Model | Params | 5 s clip acc. | Live 2 s window acc. |
 |---|---|---|---|
 | Teacher: CNN14 frozen + linear probe | 80.8M | **91.8% ± 2.1** | n/a |
-| Student, baseline (CE, full clips) | 1.3M | **80.2% ± 1.6** | 71.1% ± 3.3 |
-| Student + augmentation (energy crops, gain, SpecAugment, mixup) | 1.3M | 76.5% ± 3.8 | 72.3% ± 3.0 |
-| Student + augmentation + distillation (shipped) | 1.3M | 76.3% ± 1.8 | **72.4% ± 2.3** |
+| Student, baseline (CE, full clips, 60 ep) | 1.3M | 80.2% ± 1.6 | 71.1% ± 3.3 |
+| Student + augmentation (energy crops, gain, SpecAugment, mixup, 60 ep) | 1.3M | 76.5% ± 3.8 | 72.3% ± 3.0 |
+| Student + augmentation + distillation, 60 ep | 1.3M | 76.3% ± 1.8 | 72.4% ± 2.3 |
+| **Student + augmentation + distillation, 150 ep (shipped)** | 1.3M | **84.3% ± 1.1** | **80.8% ± 2.0** |
 
 "Live 2 s" scores each fold model on the loudest 2 s of its held-out clips, which is what the web app actually sees. Reference points: human accuracy on ESC-50 is 81.3%, and fine-tuned large models reach 95–98%.
 
 **What the ablation shows.**
-- Augmentation and distillation trade full-clip accuracy for accuracy on short windows. The baseline sees whole 5 s clips and wins on that protocol. The augmented students, trained on 3 s crops, are better on the 2 s windows the product uses, so one of them ships.
-- With a 60-epoch budget, the heavily regularized students are still under-fitting: training loss is still falling. A longer schedule is the obvious next experiment.
-- Distillation mainly reduced variance across folds (±1.8 vs ±3.8).
+- At 60 epochs, augmentation and distillation looked like a trade-off: they lost full-clip accuracy to the baseline (76% vs 80%) and gained only slightly on 2 s windows. Training loss was still falling, which pointed to under-fitting rather than a bad recipe.
+- Training the distilled student 2.5× longer (150 epochs) confirmed it: +8.0 points on 5 s clips and +8.4 on live 2 s windows. It now beats the baseline on both protocols and passes the reported human accuracy (81.3%).
+- Distillation also gave the lowest variance across folds (±1.1).
 
 **Quantization (fold-5 model, held-out fold 5):**
 
 | | fp32 | int8 (static QDQ) |
 |---|---|---|
-| Accuracy (5 s) | 75.3% | 76.3% |
+| Accuracy (5 s) | 82.5% | 82.5% |
+| Accuracy (live 2 s) | 80.3% | 80.3% |
 | Size | 5.0 MB | **1.3 MB** |
 | CPU latency, 2 s window (1 thread, p50) | 15.3 ms | **4.6 ms** |
 
 The ONNX fp32 output matches PyTorch to within 6e-5. In the browser (onnxruntime-web, WASM, single thread), one prediction including the JS log-mel takes about 35 ms in headless Chrome.
 
-**Calibration.** Pooled out-of-fold ECE is 0.033. Temperature scaling (T = 1.10, cross-fitted) brings it to 0.023, and the app applies that temperature. See `reports/reliability.png`.
+**Calibration.** Pooled out-of-fold ECE is 0.027, so the longer-trained model is already well calibrated. Cross-fitted temperature scaling (T = 1.06) leaves it unchanged (0.028); at 60 epochs it had helped (0.033 → 0.023). The app still applies the fitted temperature. See `reports/reliability.png`.
 
 **Failure analysis** (`reports/top_confusions.md`, `reports/confusion_matrix.png`). The most common errors are acoustically reasonable:
-- keyboard typing → mouse click
+- washing machine → engine / train / vacuum cleaner
 - engine → helicopter
-- helicopter → airplane
-- water drops → mouse click
+- keyboard typing → mouse click
+- wind → thunderstorm
 
-The hardest classes are washing machine (28%), helicopter (33%), water drops (43%) and laughing (45%), mostly broadband or stationary noises. Top-5 accuracy is 96.1%.
+The hardest classes are washing machine (38%), helicopter (53%), airplane (55%) and engine (60%): stationary, broadband machine noise. Top-5 accuracy is 98.0%.
 
 ## Model card
 

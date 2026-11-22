@@ -29,18 +29,18 @@
       "live_2s_std": 0.02984962311319861
     },
     "distill": {
-      "mean_acc": 0.763,
-      "std_acc": 0.017916472867168902,
+      "mean_acc": 0.8425,
+      "std_acc": 0.010954451150103336,
       "fold_acc": {
-        "1": 0.7475,
-        "2": 0.7475,
-        "3": 0.7925,
-        "4": 0.775,
-        "5": 0.7525
+        "1": 0.85,
+        "2": 0.835,
+        "3": 0.855,
+        "4": 0.8475,
+        "5": 0.825
       },
       "params": 1251284,
-      "live_2s_acc": 0.7235,
-      "live_2s_std": 0.023162469643800938
+      "live_2s_acc": 0.8075000000000001,
+      "live_2s_std": 0.02006240264773888
     },
     "teacher": {
       "mean_acc": 0.9175000000000001,
@@ -56,44 +56,44 @@
     }
   },
   "calibration": {
-    "temperature": 1.09965652329183,
-    "ece_before": 0.03289552998542786,
-    "ece_after": 0.023020450394600614
+    "temperature": 1.0612078990919325,
+    "ece_before": 0.026852295845747005,
+    "ece_after": 0.02849827786535023
   },
-  "pooled_accuracy": 0.763,
-  "pooled_top5_accuracy": 0.961,
+  "pooled_accuracy": 0.8425,
+  "pooled_top5_accuracy": 0.98,
   "hardest_classes": [
     [
       "washing machine",
-      0.275
+      0.375
     ],
     [
       "helicopter",
-      0.325
-    ],
-    [
-      "water drops",
-      0.425
-    ],
-    [
-      "laughing",
-      0.45
+      0.525
     ],
     [
       "airplane",
-      0.45
-    ],
-    [
-      "hen",
-      0.525
-    ],
-    [
-      "wind",
-      0.525
+      0.55
     ],
     [
       "engine",
-      0.55
+      0.6
+    ],
+    [
+      "wind",
+      0.625
+    ],
+    [
+      "water drops",
+      0.675
+    ],
+    [
+      "footsteps",
+      0.7
+    ],
+    [
+      "laughing",
+      0.725
     ]
   ],
   "easiest_classes": [
@@ -102,11 +102,19 @@
       1.0
     ],
     [
+      "toilet flush",
+      1.0
+    ],
+    [
       "thunderstorm",
       1.0
     ],
     [
-      "rooster",
+      "sneezing",
+      0.975
+    ],
+    [
+      "snoring",
       0.975
     ],
     [
@@ -114,42 +122,34 @@
       0.975
     ],
     [
-      "church bells",
+      "hand saw",
       0.975
     ],
     [
-      "sheep",
-      0.95
-    ],
-    [
-      "crying baby",
-      0.95
-    ],
-    [
-      "glass breaking",
+      "rooster",
       0.95
     ]
   ],
   "export": {
     "fp32": {
-      "fold5_acc_5s": 0.7525,
-      "fold5_acc_live_2s": 0.725,
+      "fold5_acc_5s": 0.825,
+      "fold5_acc_live_2s": 0.8025,
       "size_mb": 5.007404,
       "cpu_latency_ms_2s_window": {
-        "p50": 15.373479500340181,
-        "p95": 16.76507499687432
+        "p50": 15.290104001906002,
+        "p95": 16.717831245841808
       }
     },
     "int8": {
-      "fold5_acc_5s": 0.7625,
-      "fold5_acc_live_2s": 0.7225,
+      "fold5_acc_5s": 0.825,
+      "fold5_acc_live_2s": 0.8025,
       "size_mb": 1.296635,
       "cpu_latency_ms_2s_window": {
-        "p50": 4.6326044994202675,
-        "p95": 4.7691309486253886
+        "p50": 4.628541497368133,
+        "p95": 4.6939041509176604
       }
     },
-    "torch_vs_onnx_fp32_max_abs_diff": 5.936622619628906e-05,
+    "torch_vs_onnx_fp32_max_abs_diff": 7.653236389160156e-05,
     "shipped_size_mb": 1.296635
   }
 }

@@ -44,12 +44,12 @@ The model is trained, evaluated and quantized by the pipeline in [`training/`](t
 |---|---|---|
 | Teacher: PANNs CNN14 (frozen) + linear probe | 91.8% | 80.8M params |
 | Student CNN, baseline | 80.2% (5 s clips) | 1.3M params |
-| **Shipped student: augmentation + distillation from the teacher** | 76.3% (5 s) · **72.4% (live 2 s windows)** | **1.3 MB int8** |
+| **Shipped student: augmentation + distillation from the teacher** | **84.3% (5 s)** · **80.8% (live 2 s windows)** | **1.3 MB int8** |
 
 - **Training-serving parity.** The log-mel front end is implemented twice: in PyTorch for training and in JavaScript for the browser (`src/ml/logmel.js`). Golden vectors test that both match within 0.01 dB.
 - **Streaming resampler.** A windowed-sinc filter converts device audio (44.1/48 kHz) to 16 kHz chunk by chunk, without aliasing.
 - **Quantization.** Static int8 (QDQ, per-channel). It is 3.9× smaller and 3.3× faster on CPU, with no accuracy loss on the held-out fold.
-- **Calibration.** Temperature scaling cuts expected calibration error from 0.033 to 0.023.
+- **Calibration.** Expected calibration error is 0.027 out of fold, checked with cross-fitted temperature scaling.
 
 The pipeline has a full ablation, a confusion matrix, failure analysis and a model card. See [training/README.md](training/README.md).
 
