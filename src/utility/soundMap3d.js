@@ -4,7 +4,9 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 const BACKGROUND = 0x220033;
 const SCALE = 10; // UMAP coordinates are normalized to [-1, 1]
 const TRAIL = 40;
-export const CATEGORY_COLORS = ["#f59e0b", "#38bdf8", "#f472b6", "#a3e635", "#c084fc"];
+import { CATEGORY_COLORS } from "./categories";
+
+export { CATEGORY_COLORS };
 
 function dotTexture() {
   const c = document.createElement("canvas");

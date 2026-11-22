@@ -2,7 +2,9 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import vertexShader from "./vertexshader";
 import fragmentShader from "./fragmentshader";
-import { buildRowMap } from "./spectrogramColors";
+import { buildRowMap, fillRow } from "./spectrogramColors";
+
+export { fillRow };
 
 export const FREQUENCY_SAMPLES = 128; // Y resolution (frequency rows shown)
 export const TIME_SAMPLES = 1000; // X resolution (history length in time steps)
@@ -19,17 +21,6 @@ export function terrainRowMap(bins, sampleRate, rows = FREQUENCY_SAMPLES + 1) {
   return buildRowMap(rows, bins, sampleRate, FREQUENCY_RANGE).reverse();
 }
 
-/** Resample analyser bins onto the terrain's mel rows (linear interpolation between bins). */
-export function fillRow(out, frequencyData, rowMap) {
-  const last = frequencyData.length - 1;
-  for (let j = 0; j < out.length; j++) {
-    const pos = rowMap[j];
-    const lo = Math.floor(pos);
-    const hi = Math.min(last, lo + 1);
-    out[j] = frequencyData[lo] + (frequencyData[hi] - frequencyData[lo]) * (pos - lo);
-  }
-  return out;
-}
 
 /**
  * Soften a terrain row in place: a [1 2 1] blur across frequency, then blend with the previous row

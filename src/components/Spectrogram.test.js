@@ -11,13 +11,19 @@ jest.mock("next/link", () => {
   return Link;
 });
 
+// jsdom has no WebGL: the page must fall back to the 2D canvas and skip the orb.
+jest.mock("../utility/spectrogramWall", () => ({ createSpectrogramWall: () => { throw new Error("no WebGL"); } }));
+jest.mock("../utility/soundOrb", () => ({ createSoundOrb: () => { throw new Error("no WebGL"); } }));
+
 afterEach(() => {
   delete navigator.mediaDevices;
 });
 
 describe("Spectrogram", () => {
-  it("renders the title, 3D link and controls", () => {
-    render(<Spectrogram />);
+  it("renders the title, 3D link and controls", async () => {
+    await act(async () => {
+      render(<Spectrogram />);
+    });
     expect(screen.getByRole("heading", { name: /sound recognition/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view in 3d/i })).toHaveAttribute("href", "/viewIn3D");
     expect(screen.getByRole("button", { name: /visualize audio/i })).toHaveAttribute("aria-pressed", "false");
@@ -27,7 +33,9 @@ describe("Spectrogram", () => {
   });
 
   it("explains when a chosen file can't be decoded", async () => {
-    render(<Spectrogram />); // jsdom has no AudioContext, so decoding fails like an unsupported browser
+    await act(async () => {
+      render(<Spectrogram />);
+    }); // jsdom has no AudioContext, so decoding fails like an unsupported browser
     const input = screen.getByLabelText(/audio file/i);
     await act(async () =>
       fireEvent.change(input, { target: { files: [{ name: "x.wav", size: 3, arrayBuffer: async () => new ArrayBuffer(3) }] } })
@@ -39,7 +47,9 @@ describe("Spectrogram", () => {
     const denied = Object.assign(new Error("denied"), { name: "NotAllowedError" });
     navigator.mediaDevices = { getUserMedia: jest.fn().mockRejectedValue(denied) };
 
-    render(<Spectrogram />);
+    await act(async () => {
+      render(<Spectrogram />);
+    });
     await act(async () => fireEvent.click(screen.getByRole("button", { name: /visualize audio/i })));
 
     expect(screen.getByRole("alert")).toHaveTextContent(/microphone access was blocked/i);

@@ -3,9 +3,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import useMicAnalyser from "../hooks/useMicAnalyser";
 import { createFileSource } from "../audio/fileSource";
-import { buildLoudnessLut, buildRowMap, freqToY, paintColumn } from "../utility/spectrogramColors";
+import { buildLoudnessLut, buildRowMap, fillRow, freqToY, paintColumn } from "../utility/spectrogramColors";
 import { createStepClock } from "../utility/frameClock";
+import { detectPitch, freqToNote } from "../utility/pitch";
+import { categoryColor } from "../utility/categories";
 import SoundClassifier from "./SoundClassifier";
+import SoundOrb from "./SoundOrb";
 
 const FFT_SIZE = 4096; // 2048 frequency bins
 // No smoothing across frames: a spectrogram should show onsets (claps, clicks) sharply.
@@ -16,6 +19,8 @@ const MIC_OPTIONS = {
   audioConstraints: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
 };
 const PIXELS_PER_SECOND = 60;
+const PITCH_CLARITY = 0.85; // below this the sound is too noisy to call a note
+const PITCH_WINDOW = 2048; // samples given to YIN (~43 ms at 48 kHz)
 const LUT = buildLoudnessLut();
 const SILENCE = `rgb(${LUT[0]}, ${LUT[1]}, ${LUT[2]})`;
 const TICKS = [
@@ -31,8 +36,19 @@ function fitCanvas(canvas) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+/** Median of the last three pitch estimates: removes single-frame octave jumps. */
+function median3(a, b, c) {
+  return Math.max(Math.min(a, b), Math.min(Math.max(a, b), c));
+}
+
 const Spectrogram = () => {
   const canvasRef = useRef(null);
+  const wallContainerRef = useRef(null);
+  const wallRef = useRef(null); // WebGL wall; null means the 2D canvas fallback is in use
+  const wallModRef = useRef(null); // the lazily loaded wall module (row count, frequency -> row)
+  const [wallReady, setWallReady] = useState(false);
+  const [note, setNote] = useState(null);
+  const [accent, setAccent] = useState(null);
   const fileInputRef = useRef(null);
   const { status, error, analyser, start, stop } = useMicAnalyser(MIC_OPTIONS);
   const [height, setHeight] = useState(0);
@@ -53,6 +69,30 @@ const Spectrogram = () => {
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
+  }, []);
+
+  // Prefer the WebGL wall; keep the 2D canvas if WebGL isn't available.
+  useEffect(() => {
+    let wall = null;
+    let cancelled = false;
+    import("../utility/spectrogramWall")
+      .then((mod) => {
+        if (cancelled) return;
+        wall = mod.createSpectrogramWall(wallContainerRef.current, { background: SILENCE });
+        wallModRef.current = mod;
+        wallRef.current = wall;
+        setWallReady(true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      wallRef.current = null;
+      wall?.dispose();
+    };
+  }, []);
+
+  const onResult = useCallback((result) => {
+    if (result && !result.quiet && !result.unknown) setAccent(categoryColor(result.top));
   }, []);
 
   const stopFile = useCallback(() => {
@@ -101,9 +141,59 @@ const Spectrogram = () => {
 
   useEffect(() => () => fileRef.current?.stop(), []);
 
-  // Scrolling spectrogram: shift the image 1px left, paint the newest column on the right.
+  // WebGL wall: one mel column per step into the GPU ring buffer, plus the pitch trace.
   useEffect(() => {
-    if (!analyser) return undefined;
+    if (!analyser || !wallReady) return undefined;
+    const { WALL_ROWS, wallRowForFreq } = wallModRef.current;
+    const sampleRate = analyser.context?.sampleRate ?? 48000;
+    const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    const timeData = new Float32Array(analyser.fftSize);
+    const rowMap = buildRowMap(WALL_ROWS, frequencyData.length, sampleRate).reverse(); // bottom row first
+    const column = new Uint8Array(WALL_ROWS);
+    const steps = createStepClock(PIXELS_PER_SECOND);
+    const recent = [0, 0, 0];
+    let pitch = null;
+    let stepCount = 0;
+    let lastNoteUpdate = 0;
+    let frameId = 0;
+
+    const draw = (now = performance.now()) => {
+      frameId = requestAnimationFrame(draw);
+      const n = steps(now);
+      if (n === 0) return;
+      analyser.getByteFrequencyData(frequencyData);
+      fillRow(column, frequencyData, rowMap);
+
+      // Pitch at 30 Hz is plenty for a smooth trace and keeps YIN's cost low.
+      if (stepCount++ % 2 === 0) {
+        analyser.getFloatTimeDomainData(timeData);
+        const p = detectPitch(timeData.subarray(timeData.length - PITCH_WINDOW), sampleRate);
+        if (p && p.clarity >= PITCH_CLARITY) {
+          recent.shift();
+          recent.push(p.freq);
+          pitch = { freq: recent[0] ? median3(...recent) : p.freq, clarity: p.clarity };
+        } else {
+          pitch = null;
+          recent.fill(0);
+        }
+        if (now - lastNoteUpdate > 120) {
+          lastNoteUpdate = now;
+          setNote(pitch ? { ...freqToNote(pitch.freq), freq: pitch.freq } : null);
+        }
+      }
+      const row = pitch ? wallRowForFreq(pitch.freq) : null;
+      for (let i = 0; i < n; i++) wallRef.current?.push(column, row, pitch?.clarity ?? 0);
+    };
+    draw();
+    return () => {
+      cancelAnimationFrame(frameId);
+      setNote(null);
+    };
+  }, [analyser, wallReady]);
+
+  // 2D canvas fallback: shift the image left, paint the newest column on the right.
+  useEffect(() => {
+    if (!analyser || wallReady) return undefined;
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const frequencyData = new Uint8Array(analyser.frequencyBinCount);
@@ -131,14 +221,16 @@ const Spectrogram = () => {
     draw();
 
     return () => cancelAnimationFrame(frameId);
-  }, [analyser]);
+  }, [analyser, wallReady]);
 
   return (
     <div data-test="spectrogram-container" className="relative min-h-screen">
-      <canvas ref={canvasRef} className="fixed inset-0 -z-10 h-full w-full" aria-hidden="true" />
-      {/* Mel-scaled frequency axis */}
+      <canvas ref={canvasRef} className={`fixed inset-0 -z-10 h-full w-full ${wallReady ? "hidden" : ""}`} aria-hidden="true" />
+      <div ref={wallContainerRef} className="fixed inset-0 -z-10" aria-hidden="true" />
+      {/* Mel-scaled frequency axis (the WebGL wall draws its own) */}
       <ol className="pointer-events-none fixed inset-y-0 left-0 -z-[5] text-[10px] text-white/50" aria-hidden="true">
         {height > 0 &&
+          !wallReady &&
           TICKS.map(([f, label]) => (
             <li
               key={f}
@@ -164,13 +256,16 @@ const Spectrogram = () => {
           </Link>
         </div>
 
+        <SoundOrb analyser={analyser} accent={accent} />
+
         <p data-test="spectrogram-title-text" className="max-w-xl text-sm">
           Use your microphone, or any audio file if you&apos;d rather not. A quiet room works best.
         </p>
 
         <p data-test="spectrogram-p-text" className="mt-6 max-w-xl text-sm">
           The spectrogram scrolls right to left. Height is pitch on a mel scale (how we hear it, low notes at the
-          bottom) and colour is loudness, from violet when quiet to yellow when loud. Try a long &quot;shhh&quot;.
+          bottom) and colour is loudness, from violet when quiet to yellow when loud. Whistle or hum and a cyan line
+          traces your melody.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3">
           <button
@@ -193,6 +288,21 @@ const Spectrogram = () => {
           </button>
           <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={onFile} data-test="file-input" aria-label="Audio file" />
         </div>
+        {isOn && (
+          <p className="h-5 text-sm tabular-nums" aria-live="off" data-test="pitch-readout">
+            {note ? (
+              <>
+                <span className="text-cyan-300">♪ {note.name}</span>{" "}
+                <span className="opacity-70">
+                  {note.cents >= 0 ? "+" : ""}
+                  {note.cents}¢ · {note.freq.toFixed(0)} Hz
+                </span>
+              </>
+            ) : (
+              <span className="opacity-50">♪ no clear pitch</span>
+            )}
+          </p>
+        )}
         {file && (
           <p className="text-xs opacity-80" data-test="file-playing">
             Playing <span className="font-semibold">{file.name}</span> ({file.duration.toFixed(0)} s). No microphone needed.
@@ -209,7 +319,7 @@ const Spectrogram = () => {
           </p>
         )}
 
-        <SoundClassifier source={file} />
+        <SoundClassifier source={file} onResult={onResult} />
       </main>
 
       <footer data-test="author-tag" className="absolute bottom-4 left-0 w-full text-center text-xs text-[#a89bb3]">

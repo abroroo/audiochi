@@ -86,6 +86,18 @@ export function buildRowMap(height, bins, sampleRate, { fMin, fMax } = AXIS_RANG
   return map;
 }
 
+/** Resample analyser bins onto mel rows from buildRowMap() (linear interpolation between bins). */
+export function fillRow(out, frequencyData, rowMap) {
+  const last = frequencyData.length - 1;
+  for (let j = 0; j < out.length; j++) {
+    const pos = rowMap[j];
+    const lo = Math.floor(pos);
+    const hi = Math.min(last, lo + 1);
+    out[j] = frequencyData[lo] + (frequencyData[hi] - frequencyData[lo]) * (pos - lo);
+  }
+  return out;
+}
+
 /**
  * Fill a 1-pixel-wide RGBA column from frequency data, low frequencies at the bottom.
  *

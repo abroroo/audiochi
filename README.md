@@ -8,7 +8,9 @@
 
 Audiochi listens through your microphone and shows what it hears:
 
-- **Scrolling spectrogram.** A 2D frequency-over-time view drawn on canvas from a 4096-point FFT. It uses a labelled mel-scale axis and the perceptually uniform magma colormap.
+- **Spectrogram wall.** The live spectrogram as a glowing wall in perspective that leans with the pointer. It is a WebGL ring-buffer texture, so nothing is copied as it scrolls, with a mel axis in Hz on one side and musical notes on the other, in the magma colormap. A 2D canvas takes over if WebGL is missing.
+- **Pitch tracker.** YIN pitch detection (with parabolic interpolation and a median filter) draws a cyan trace of what you whistle or hum and names the note: "A4 +3¢".
+- **Sound orb.** A noise-displaced sphere that ripples with 64 mel bands, swells with the bass and glows in the colour of the sound category the model last recognized.
 - **No mic needed.** Any audio file can be dropped in. It is decoded and played into a `MediaStream`, so the spectrogram, classifier and teaching all run on it exactly as they do on the microphone.
 - **Sound tunnel.** The spectrogram wrapped into a tunnel you fly through: time streams toward you, pitch runs around the wall, and loud sounds push in and glow (GLSL + bloom post-processing). Sounds the model recognizes float past as labels.
 - **3D sound landscape.** A lit, mel-scaled terrain built with three.js and custom shaders, with orbit controls.
