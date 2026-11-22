@@ -1,8 +1,5 @@
 import * as THREE from "three";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { createBloom, disposeSprite, labelSprite } from "./sceneKit";
 import { GRID_GLSL, MAGMA_GLSL } from "./glsl";
 import { pushRing, ringRowIndex } from "./tunnelMath";
 
@@ -101,25 +98,6 @@ function buildGeometry() {
   return { geometry, displacement };
 }
 
-function labelSprite(text) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 128;
-  const g = canvas.getContext("2d");
-  g.font = "600 54px Inter, system-ui, sans-serif";
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.shadowColor = "rgba(251, 146, 60, 0.9)";
-  g.shadowBlur = 24;
-  g.fillStyle = "#fff7ed";
-  g.fillText(text, 256, 64, 490);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, opacity: 0 }));
-  sprite.scale.set(4.4, 1.1, 1);
-  return sprite;
-}
-
 /**
  * The spectrogram wrapped into a tunnel you fly through. Time streams toward the viewer, pitch runs
  * around the wall (bass on the floor, highs on the ceiling) and loudness pushes the wall inward and
@@ -165,11 +143,7 @@ export function createSoundTunnel(container, { rows }) {
   scene.add(flow);
   const labels = [];
 
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.7, 0.4, 0.55);
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  const post = createBloom(renderer, scene, camera, { strength: 0.7, radius: 0.4, threshold: 0.55 });
 
   const pointer = new THREE.Vector2();
   const onPointerMove = (e) => {
@@ -181,8 +155,7 @@ export function createSoundTunnel(container, { rows }) {
     const w = container.clientWidth || window.innerWidth;
     const h = container.clientHeight || window.innerHeight;
     renderer.setSize(w, h);
-    composer.setSize(w, h);
-    bloom.resolution.set(w / 2, h / 2);
+    post.setSize(w, h);
     camera.aspect = w / Math.max(1, h);
     camera.updateProjectionMatrix();
   };
@@ -206,12 +179,11 @@ export function createSoundTunnel(container, { rows }) {
       s.material.opacity = Math.min(1, age / 0.8) * (s.position.z > -6 ? Math.max(0, (2 - s.position.z) / 8) : 1);
       if (s.position.z > 2) {
         flow.remove(s);
-        s.material.map.dispose();
-        s.material.dispose();
+        disposeSprite(s);
         labels.splice(i, 1);
       }
     }
-    composer.render();
+    post.composer.render();
   });
 
   return {
@@ -226,8 +198,9 @@ export function createSoundTunnel(container, { rows }) {
       flow.position.z = f * SPACING;
     },
     /** A detected sound: its name appears far down the tunnel and floats past. */
-    addLabel(text) {
-      const s = labelSprite(text);
+    addLabel(text, color) {
+      const s = labelSprite(text, color);
+      s.material.opacity = 0;
       const side = Math.random() < 0.5 ? -1 : 1;
       const phi = Math.PI / 2 + side * (0.35 + Math.random() * 0.6); // upper sides, clear of the floor
       s.position.set(Math.cos(phi) * RADIUS * 0.5, Math.sin(phi) * RADIUS * 0.5, -LENGTH * 0.8);
@@ -243,14 +216,10 @@ export function createSoundTunnel(container, { rows }) {
       renderer.setAnimationLoop(null);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
-      for (const s of labels) {
-        s.material.map.dispose();
-        s.material.dispose();
-      }
+      labels.forEach(disposeSprite);
       geometry.dispose();
       material.dispose();
-      bloom.dispose();
-      composer.dispose();
+      post.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       renderer.domElement.remove();

@@ -12,8 +12,11 @@ Audiochi listens through your microphone and shows what it hears:
 - **Pitch tracker.** YIN pitch detection (with parabolic interpolation and a median filter) draws a cyan trace of what you whistle or hum and names the note: "A4 +3¢".
 - **Sound orb.** A noise-displaced sphere that ripples with 64 mel bands, swells with the bass and glows in the colour of the sound category the model last recognized.
 - **No mic needed.** Any audio file can be dropped in. It is decoded and played into a `MediaStream`, so the spectrogram, classifier and teaching all run on it exactly as they do on the microphone.
+- **Four 3D views**, each its own lazily loaded module: tunnel, particle galaxy, ridgeline waves and terrain. Recognized sounds appear in all of them.
 - **Sound tunnel.** The spectrogram wrapped into a tunnel you fly through: time streams toward you, pitch runs around the wall, and loud sounds push in and glow (GLSL + bloom post-processing). Sounds the model recognizes float past as labels.
-- **3D sound landscape.** A lit, mel-scaled terrain built with three.js and custom shaders, with orbit controls.
+- **Particle galaxy.** 24,000 GPU particles stream from a core. Each belongs to a frequency band, and that band's loudness drives a CPU-integrated phase, so particles speed up without jumping. The palette follows the recognized sound category.
+- **Ridgeline waves.** One glowing line per moment of spectrum, receding into the distance. A background-coloured fill under each line hides the lines behind it, and labels are pinned above peaks.
+- **3D terrain.** A lit, mel-scaled landscape with bloom and orbit controls. Recognized sounds are planted as flags where they were heard and scroll back in time.
 - **Sound classification.** A 1.3M-parameter CNN that I trained on ESC-50 recognizes 50 everyday sounds live. It runs as a 1.3 MB int8 ONNX model in the browser.
 - **"I don't know that one."** Speech, music and other sounds outside the 50 classes are flagged instead of mislabelled. The detector was chosen by a small out-of-distribution study.
 - **Teach it a new sound.** Record a sound 3–5 times and it is recognized from then on. This is few-shot learning in the model's embedding space, with no retraining and no upload.

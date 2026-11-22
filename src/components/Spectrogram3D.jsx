@@ -6,6 +6,7 @@ import useLiveClassifier from "../hooks/useLiveClassifier";
 import { createFileSource } from "../audio/fileSource";
 import { createSpectrogram3D, fillRow, FREQUENCY_SAMPLES, smoothRow, terrainRowMap } from "../utility/spectrogram3d";
 import { createStepClock } from "../utility/frameClock";
+import { categoryColor } from "../utility/categories";
 
 // 1024 bins (~23 Hz each at 48 kHz) resampled onto 129 mel rows: smooth low end, sharp highs.
 // Browser voice processing is off so the view shows the room as it is.
@@ -21,19 +22,29 @@ const MODES = {
     stepsPerSecond: 45,
     text: "Fly through your sound. Time streams toward you, pitch runs around the wall (bass on the floor, highs on the ceiling) and loud sounds push in and glow. Sounds the model recognizes float past. Move the pointer or drag to look around.",
   },
-  landscape: {
-    label: "Landscape",
+  galaxy: {
+    label: "Galaxy",
     stepsPerSecond: 60,
-    text: "Sound as a moving landscape: time runs left to right, pitch goes front to back, and louder sounds rise higher and glow brighter. Drag to look around, scroll or pinch to zoom.",
+    text: "Thousands of particles stream from a glowing core. Each belongs to a frequency band (bass at the bottom, highs at the top), and its band's loudness sets how fast, far and bright it flies. The colours shift with the sound the model recognizes. Drag to orbit.",
+  },
+  ridgeline: {
+    label: "Ridgeline",
+    stepsPerSecond: 16,
+    text: "Each glowing line is one moment of sound, bass on the left and highs on the right, and older moments recede into the distance. Recognized sounds are pinned above their peak. Move the pointer to shift the view.",
+  },
+  landscape: {
+    label: "Terrain",
+    stepsPerSecond: 60,
+    text: "Sound as a moving landscape: time runs left to right, pitch goes front to back, and louder sounds rise and glow. Recognized sounds are planted as flags where they were heard. Drag to look around, scroll or pinch to zoom.",
   },
 };
 
 async function createView(mode, container) {
-  if (mode === "tunnel") {
-    // Loaded on demand: the bloom post-processing code is only needed for the tunnel.
-    const { createSoundTunnel } = await import("../utility/soundTunnel");
-    return createSoundTunnel(container, { rows: FREQUENCY_SAMPLES + 1 });
-  }
+  const rows = FREQUENCY_SAMPLES + 1;
+  // Each view is its own module, loaded only when its tab is opened.
+  if (mode === "tunnel") return (await import("../utility/soundTunnel")).createSoundTunnel(container, { rows });
+  if (mode === "galaxy") return (await import("../utility/particleGalaxy")).createParticleGalaxy(container, { rows });
+  if (mode === "ridgeline") return (await import("../utility/ridgeline")).createRidgeline(container, { rows });
   return createSpectrogram3D(container);
 }
 
@@ -99,8 +110,9 @@ const Spectrogram3D = () => {
     const latest = classifier.events[0];
     if (!latest || latest.at === lastEventRef.current) return;
     lastEventRef.current = latest.at;
-    viewRef.current?.addLabel?.(latest.label);
-  }, [classifier.events]);
+    const index = classifier.labels.indexOf(latest.label);
+    viewRef.current?.addLabel?.(latest.label, latest.taught || index < 0 ? "#fb923c" : categoryColor(index));
+  }, [classifier.events, classifier.labels]);
 
   const stopFile = useCallback(() => {
     fileRef.current?.stop();
@@ -161,7 +173,7 @@ const Spectrogram3D = () => {
             View in 2D &#10548;
           </Link>
         </div>
-        <div role="radiogroup" aria-label="3D view" className="flex gap-1 rounded-full border border-white/30 p-1 text-sm">
+        <div role="radiogroup" aria-label="3D view" className="flex flex-wrap justify-center gap-1 rounded-full border border-white/30 p-1 text-sm">
           {Object.entries(MODES).map(([key, m]) => (
             <button
               key={key}
@@ -169,7 +181,7 @@ const Spectrogram3D = () => {
               role="radio"
               aria-checked={mode === key}
               onClick={() => setMode(key)}
-              className={`rounded-full px-4 py-1 ${mode === key ? "bg-white text-[#220033]" : "hover:bg-white/10"}`}
+              className={`rounded-full px-3 py-1 sm:px-4 ${mode === key ? "bg-white text-[#220033]" : "hover:bg-white/10"}`}
             >
               {m.label}
             </button>
@@ -186,7 +198,7 @@ const Spectrogram3D = () => {
             {file ? "Stop file" : "Use an audio file"}
           </button>
           <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={onFile} aria-label="Audio file" />
-          {mode === "landscape" && (
+          {(mode === "landscape" || mode === "galaxy") && (
             <button type="button" className="button-28 button-28--small" onClick={() => viewRef.current?.resetView?.()}>
               Reset view
             </button>

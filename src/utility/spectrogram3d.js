@@ -3,6 +3,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import vertexShader from "./vertexshader";
 import fragmentShader from "./fragmentshader";
 import { buildRowMap, fillRow } from "./spectrogramColors";
+import { createBloom, disposeSprite, labelSprite } from "./sceneKit";
 
 export { fillRow };
 
@@ -104,7 +105,10 @@ function buildGeometry() {
  * Owns its renderer and render loop; call `dispose()` to free the WebGL context.
  *
  * @param {HTMLElement} container
- * @returns {{ update(spectrum: Uint8Array): void, clear(): void, resetView(): void, dispose(): void }}
+ * Recognized sounds are pinned as glowing flags on the terrain at the moment and pitch they were
+ * heard, and travel back in time with it.
+ *
+ * @returns {{ update(spectrum: Uint8Array): void, addLabel(text: string, color?: string): void, clear(): void, resetView(): void, dispose(): void }}
  */
 export function createSpectrogram3D(container) {
   const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1000);
@@ -128,16 +132,24 @@ export function createSpectrogram3D(container) {
     },
   });
   scene.add(new THREE.Mesh(geometry, material));
+  const flags = new THREE.Group();
+  scene.add(flags);
+  const poleMaterial = new THREE.LineBasicMaterial({ color: 0xfff1e0 });
+  const stepX = X_SIZE / TIME_SAMPLES;
+  let lastRow = null;
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 3x phones would render 9x the pixels
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
 
+  const post = createBloom(renderer, scene, camera, { strength: 0.4, radius: 0.35, threshold: 0.88 });
+  post.setSize(window.innerWidth, window.innerHeight);
   const onResize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    post.setSize(window.innerWidth, window.innerHeight);
   };
   window.addEventListener("resize", onResize);
 
@@ -157,17 +169,53 @@ export function createSpectrogram3D(container) {
 
   renderer.setAnimationLoop(() => {
     controls.update();
-    renderer.render(scene, camera);
+    for (const f of flags.children) {
+      const s = f.userData.sprite;
+      s.material.opacity = Math.min(1, s.material.opacity + 0.04);
+    }
+    post.composer.render();
   });
+
+  const removeFlag = (f) => {
+    flags.remove(f);
+    f.children[0].geometry.dispose();
+    disposeSprite(f.userData.sprite);
+  };
 
   return {
     update(spectrum) {
       pushSpectrum(heights, spectrum);
       displacement.needsUpdate = true;
+      lastRow = spectrum;
+      for (const f of [...flags.children]) {
+        f.position.x -= stepX;
+        if (f.position.x < -X_SIZE / 2) removeFlag(f);
+      }
+    },
+    /** Pin a flag at the newest moment, above the loudest frequency of that moment. */
+    addLabel(text, color) {
+      if (!lastRow) return;
+      let peak = 0;
+      for (let j = 1; j <= FREQUENCY_SAMPLES; j++) if (lastRow[j] > lastRow[peak]) peak = j;
+      const base = Math.pow(lastRow[peak] / 255, 1.6) * MAX_HEIGHT;
+      const flag = new THREE.Group();
+      flag.position.set(X_SIZE / 2, Y_BOTTOM + ((Y_TOP - Y_BOTTOM) * peak) / FREQUENCY_SAMPLES, 0);
+      const pole = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, base), new THREE.Vector3(0, 0, base + 4)]),
+        poleMaterial
+      );
+      const sprite = labelSprite(text, color);
+      sprite.position.set(0, 0, base + 4.8);
+      sprite.scale.multiplyScalar(1.2);
+      sprite.material.opacity = 0;
+      flag.add(pole, sprite);
+      flag.userData.sprite = sprite;
+      flags.add(flag);
     },
     clear() {
       heights.fill(0);
       displacement.needsUpdate = true;
+      [...flags.children].forEach(removeFlag);
     },
     /** Back to the default camera angle. */
     resetView() {
@@ -177,9 +225,13 @@ export function createSpectrogram3D(container) {
       window.removeEventListener("resize", onResize);
       renderer.setAnimationLoop(null);
       controls.dispose();
+      [...flags.children].forEach(removeFlag);
+      poleMaterial.dispose();
       geometry.dispose();
       material.dispose();
+      post.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
       renderer.domElement.remove();
     },
   };

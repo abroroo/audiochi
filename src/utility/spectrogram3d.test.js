@@ -2,6 +2,7 @@ import { FREQUENCY_SAMPLES, fillRow, pushSpectrum, smoothRow, terrainRowMap } fr
 
 // OrbitControls ships as untranspiled ESM; these tests only cover the pure buffer logic.
 jest.mock("three/addons/controls/OrbitControls.js", () => ({ OrbitControls: jest.fn() }));
+jest.mock("./sceneKit", () => ({}));
 
 describe("pushSpectrum", () => {
   it("scrolls history back one row and writes the newest spectrum into the last row", () => {
