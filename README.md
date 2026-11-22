@@ -79,7 +79,7 @@ The first version fine-tuned Google's speech-commands CNN in Teachable Machine o
 
 ## Tech stack
 
-**Web:** Next.js 16 · React 19 · Web Audio API + AudioWorklet · three.js + GLSL · onnxruntime-web · Tailwind CSS · Jest · Cypress · CircleCI → Vercel
+**Web:** Next.js 16 · React 19 · Web Audio API + AudioWorklet · three.js + GLSL · onnxruntime-web · Tailwind CSS · Jest · Cypress · CircleCI (tests) · Vercel (deploys on push)
 
 **ML:** PyTorch · PANNs CNN14 · scikit-learn · UMAP · ONNX + onnxruntime quantization · librosa · uv
 
