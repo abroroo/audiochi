@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { describeMicError } from "./useMicAnalyser";
+import { describeMicError, externalStream } from "./useMicAnalyser";
 import { loadClassifier, rmsDb } from "../ml/classifier";
 import { StreamingResampler } from "../ml/resample";
 import { SPACE_URL, centroidSims, decodeSpace, nearest, placeIn3D, project, soundsLikeSpeech } from "../ml/space";
@@ -49,7 +49,7 @@ export default function useLiveClassifier() {
   const classifierRef = useRef(null);
   const spaceRef = useRef(null);
   const taughtRef = useRef([]);
-  const audioRef = useRef(null); // { stream, ctx, node, timer }
+  const audioRef = useRef(null); // { stream, ownsStream, ctx, node, timer }
   const sessionRef = useRef(0);
   const lastRef = useRef(null); // latest { logmel, top, at } for explain()
   const captureRef = useRef(null); // pending "teach" capture
@@ -76,7 +76,7 @@ export default function useLiveClassifier() {
     clearInterval(audio.timer);
     audio.node?.port.close();
     audio.node?.disconnect();
-    audio.stream?.getTracks().forEach((t) => t.stop());
+    if (audio.ownsStream) audio.stream?.getTracks().forEach((t) => t.stop());
     if (audio.ctx && audio.ctx.state !== "closed") audio.ctx.close().catch(() => {});
   }, []);
 
@@ -105,13 +105,14 @@ export default function useLiveClassifier() {
     };
   }, []);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (options) => {
+    const external = externalStream(options);
     const session = ++sessionRef.current;
     teardown();
     setError(null);
     setStatus("loading");
     try {
-      if (!navigator.mediaDevices?.getUserMedia || typeof AudioWorkletNode === "undefined") {
+      if ((!external && !navigator.mediaDevices?.getUserMedia) || typeof AudioWorkletNode === "undefined") {
         throw new Error("This browser can't capture audio for the model. Try a recent Chrome, Firefox or Safari.");
       }
       if (!classifierRef.current) {
@@ -127,17 +128,20 @@ export default function useLiveClassifier() {
       const clf = classifierRef.current;
       setLabels(clf.labels);
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-      });
+      const stream =
+        external ??
+        (await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        }));
       if (session !== sessionRef.current) {
-        stream.getTracks().forEach((t) => t.stop());
+        if (!external) stream.getTracks().forEach((t) => t.stop());
         return;
       }
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       await ctx.audioWorklet.addModule("/worklets/pcm-capture.js");
       const node = new AudioWorkletNode(ctx, "pcm-capture");
       ctx.createMediaStreamSource(stream).connect(node);
+      if (ctx.state === "suspended") await ctx.resume().catch(() => {});
 
       // Ring buffer of the latest window at the model's sample rate.
       const resampler = new StreamingResampler(ctx.sampleRate, clf.meta.sampleRate);
@@ -191,7 +195,7 @@ export default function useLiveClassifier() {
         }
       }, INFERENCE_INTERVAL_MS);
 
-      audioRef.current = { stream, ctx, node, timer };
+      audioRef.current = { stream, ownsStream: !external, ctx, node, timer };
       setStatus("listening");
     } catch (err) {
       if (session !== sessionRef.current) return;

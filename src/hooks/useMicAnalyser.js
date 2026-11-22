@@ -19,8 +19,15 @@ export function describeMicError(error) {
   }
 }
 
+/** A start() argument may carry an external MediaStream (e.g. a playing file); click events don't. */
+export function externalStream(options) {
+  const stream = options?.stream;
+  return stream && typeof stream.getTracks === "function" ? stream : null;
+}
+
 /**
  * Owns the full microphone → AudioContext → AnalyserNode lifecycle.
+ * `start({ stream })` analyses an external stream instead of the mic; its tracks are left to their owner.
  *
  * Everything that must be torn down (media tracks, audio context) lives in refs,
  * so cleanup never reads stale React state. `stop()` and unmount release all of it.
@@ -41,13 +48,14 @@ export default function useMicAnalyser({
   const [analyser, setAnalyser] = useState(null);
 
   const streamRef = useRef(null);
+  const ownsStreamRef = useRef(false);
   const contextRef = useRef(null);
   // Incremented on every start/stop so a getUserMedia promise that resolves
   // after the user already pressed Stop (or unmounted) can detect it is stale.
   const sessionRef = useRef(0);
 
   const release = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    if (ownsStreamRef.current) streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     const ctx = contextRef.current;
     contextRef.current = null;
@@ -63,8 +71,9 @@ export default function useMicAnalyser({
     setStatus("idle");
   }, [release]);
 
-  const start = useCallback(async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
+  const start = useCallback(async (options) => {
+    const external = externalStream(options);
+    if (!external && !navigator.mediaDevices?.getUserMedia) {
       setError("This browser can't access a microphone. Try a recent Chrome, Firefox or Safari over HTTPS.");
       setStatus("error");
       return;
@@ -76,10 +85,10 @@ export default function useMicAnalyser({
     setStatus("starting");
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
+      const stream = external ?? (await navigator.mediaDevices.getUserMedia({ audio: audioConstraints }));
       if (session !== sessionRef.current) {
         // Stopped or restarted while the permission prompt was open.
-        stream.getTracks().forEach((track) => track.stop());
+        if (!external) stream.getTracks().forEach((track) => track.stop());
         return;
       }
 
@@ -89,8 +98,10 @@ export default function useMicAnalyser({
       node.fftSize = fftSize;
       node.smoothingTimeConstant = smoothingTimeConstant;
       ctx.createMediaStreamSource(stream).connect(node);
+      if (ctx.state === "suspended") await ctx.resume().catch(() => {});
 
       streamRef.current = stream;
+      ownsStreamRef.current = !external;
       contextRef.current = ctx;
       setAnalyser(node);
       setStatus("running");

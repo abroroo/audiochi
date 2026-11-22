@@ -107,6 +107,7 @@ export function createSoundMap(container, space, { onHover } = {}) {
     pointerActive = false;
   };
   renderer.domElement.addEventListener("pointermove", onPointerMove);
+  renderer.domElement.addEventListener("pointerdown", onPointerMove); // tap to label on touch screens
   renderer.domElement.addEventListener("pointerleave", onPointerLeave);
 
   const resize = () => {
@@ -174,6 +175,7 @@ export function createSoundMap(container, space, { onHover } = {}) {
       renderer.setAnimationLoop(null);
       window.removeEventListener("resize", resize);
       renderer.domElement.removeEventListener("pointermove", onPointerMove);
+      renderer.domElement.removeEventListener("pointerdown", onPointerMove);
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
       controls.dispose();
       scene.traverse((o) => {

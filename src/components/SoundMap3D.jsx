@@ -78,7 +78,7 @@ const SoundMap3D = () => {
         </div>
         <p className="max-w-xl text-xs opacity-80">
           Each dot is one of the 2,000 ESC-50 clips, placed by how the model hears it (its 256-d embedding,
-          reduced to 3D with UMAP). Similar sounds cluster. Turn on the mic to see where your sound lands. Drag to orbit.
+          reduced to 3D with UMAP). Similar sounds cluster. Turn on the mic to see where your sound lands. Drag to orbit, tap or hover a dot to name it.
         </p>
         <button type="button" className="button-28 pointer-events-auto" onClick={isListening ? stop : start}
           disabled={status === "loading" || !space} data-test="sound-map-toggle">

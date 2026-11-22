@@ -51,9 +51,9 @@ const Spectrogram3D = () => {
 
   return (
     <div className="relative min-h-screen">
-      <div ref={containerRef} className="fixed inset-0 -z-10" aria-hidden="true" />
+      <div ref={containerRef} className="fixed inset-0" aria-hidden="true" />
 
-      <main className="flex flex-col items-center gap-3 px-4 pt-8 text-center text-white">
+      <main className="pointer-events-none relative flex flex-col items-center gap-3 px-4 pt-8 text-center text-white [&_a]:pointer-events-auto [&_button]:pointer-events-auto">
         <div className="flex flex-wrap items-center justify-center gap-3">
           <h1>3D Spectrogram</h1>
           <Link href="/" className="button-28 button-28--small">
@@ -62,11 +62,16 @@ const Spectrogram3D = () => {
         </div>
         <p data-test="spectrogram-p-text" className="max-w-xl text-sm">
           Sound as a moving landscape: time runs left to right, pitch goes front to back, and louder sounds rise
-          higher and glow brighter.
+          higher and glow brighter. Drag to look around, scroll or pinch to zoom.
         </p>
-        <button type="button" className="button-28" onClick={isOn ? stop : start} aria-pressed={isOn}>
-          {status === "starting" ? "Waiting for microphone…" : isOn ? "Stop" : "Visualize in 3D"}
-        </button>
+        <div className="flex flex-wrap justify-center gap-3">
+          <button type="button" className="button-28" onClick={isOn ? stop : () => start()} aria-pressed={isOn}>
+            {status === "starting" ? "Waiting for microphone…" : isOn ? "Stop" : "Visualize in 3D"}
+          </button>
+          <button type="button" className="button-28 button-28--small" onClick={() => viewRef.current?.resetView()}>
+            Reset view
+          </button>
+        </div>
         {error && (
           <p role="alert" className="max-w-md text-sm text-orange-300">
             {error}
@@ -74,9 +79,9 @@ const Spectrogram3D = () => {
         )}
       </main>
 
-      <footer data-test="author-tag" className="fixed bottom-4 left-0 w-full text-center text-xs text-[#a89bb3]">
+      <footer data-test="author-tag" className="pointer-events-none fixed bottom-4 left-0 w-full text-center text-xs text-[#a89bb3]">
         by{" "}
-        <a target="_blank" rel="noopener noreferrer" href="https://github.com/abroroo" className="underline">
+        <a target="_blank" rel="noopener noreferrer" href="https://github.com/abroroo" className="pointer-events-auto underline">
           abroro
         </a>
       </footer>

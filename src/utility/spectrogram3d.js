@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import vertexShader from "./vertexshader";
 import fragmentShader from "./fragmentshader";
 
@@ -73,7 +74,7 @@ function buildGeometry() {
  * Owns its renderer and render loop; call `dispose()` to free the WebGL context.
  *
  * @param {HTMLElement} container
- * @returns {{ update(spectrum: Uint8Array): void, clear(): void, dispose(): void }}
+ * @returns {{ update(spectrum: Uint8Array): void, clear(): void, resetView(): void, dispose(): void }}
  */
 export function createSpectrogram3D(container) {
   const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 1000);
@@ -99,7 +100,24 @@ export function createSpectrogram3D(container) {
   };
   window.addEventListener("resize", onResize);
 
-  renderer.setAnimationLoop(() => renderer.render(scene, camera));
+  // Drag to orbit, scroll or pinch to zoom; limits keep the terrain in view and right side up.
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.set(0, 8, 0);
+  controls.enableDamping = true;
+  controls.enablePan = false;
+  controls.minDistance = 20;
+  controls.maxDistance = 120;
+  controls.minPolarAngle = 0.3 * Math.PI; // from somewhat above...
+  controls.maxPolarAngle = 0.55 * Math.PI; // ...to slightly below
+  controls.minAzimuthAngle = -Math.PI / 4; // never edge-on or from behind
+  controls.maxAzimuthAngle = Math.PI / 4;
+  controls.rotateSpeed = 0.5;
+  controls.update();
+
+  renderer.setAnimationLoop(() => {
+    controls.update();
+    renderer.render(scene, camera);
+  });
 
   return {
     update(spectrum) {
@@ -110,9 +128,14 @@ export function createSpectrogram3D(container) {
       heights.fill(0);
       displacement.needsUpdate = true;
     },
+    /** Back to the default camera angle. */
+    resetView() {
+      controls.reset();
+    },
     dispose() {
       window.removeEventListener("resize", onResize);
       renderer.setAnimationLoop(null);
+      controls.dispose();
       geometry.dispose();
       material.dispose();
       renderer.dispose();

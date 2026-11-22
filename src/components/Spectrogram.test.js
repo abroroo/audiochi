@@ -22,6 +22,17 @@ describe("Spectrogram", () => {
     expect(screen.getByRole("link", { name: /view in 3d/i })).toHaveAttribute("href", "/viewIn3D");
     expect(screen.getByRole("button", { name: /visualize audio/i })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: /recognize sounds/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /use an audio file/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/audio file/i)).toHaveAttribute("accept", "audio/*");
+  });
+
+  it("explains when a chosen file can't be decoded", async () => {
+    render(<Spectrogram />); // jsdom has no AudioContext, so decoding fails like an unsupported browser
+    const input = screen.getByLabelText(/audio file/i);
+    await act(async () =>
+      fireEvent.change(input, { target: { files: [{ name: "x.wav", size: 3, arrayBuffer: async () => new ArrayBuffer(3) }] } })
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/can't analyse audio files/i);
   });
 
   it("explains what happened when the microphone is blocked", async () => {

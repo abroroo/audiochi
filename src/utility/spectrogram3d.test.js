@@ -1,5 +1,8 @@
 import { pushSpectrum } from "./spectrogram3d";
 
+// OrbitControls ships as untranspiled ESM; these tests only cover the pure buffer logic.
+jest.mock("three/addons/controls/OrbitControls.js", () => ({ OrbitControls: jest.fn() }));
+
 describe("pushSpectrum", () => {
   it("scrolls history back one row and writes the newest spectrum into the last row", () => {
     const rowLength = 3;

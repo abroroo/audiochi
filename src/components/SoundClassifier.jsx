@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useLiveClassifier from "../hooks/useLiveClassifier";
 import { topK } from "../ml/classifier";
 import SaliencyView from "./SaliencyView";
@@ -8,7 +8,8 @@ import TeachPanel from "./TeachPanel";
 const TOP_N = 5;
 
 /** Live ESC-50 sound classification with Audiochi's own int8 ONNX model. */
-const SoundClassifier = () => {
+/** @param {{ source?: { stream: MediaStream } | null }} props  an audio file playing instead of the mic */
+const SoundClassifier = ({ source = null }) => {
   const { status, error, result, events, labels, space, taught, start, stop, recordExample, forgetSound, explain } =
     useLiveClassifier();
   const [explanation, setExplanation] = useState(null);
@@ -18,6 +19,13 @@ const SoundClassifier = () => {
   const isBusy = status === "loading";
   const top = result ? topK(result.probs, TOP_N) : [];
   const dimmed = result && (result.quiet || result.unknown);
+
+  // Classify a playing file automatically, and stop when it ends or is stopped.
+  useEffect(() => {
+    if (!source) return undefined;
+    start({ stream: source.stream });
+    return () => stop();
+  }, [source, start, stop]);
 
   const runExplain = async () => {
     setExplaining(true);
@@ -42,7 +50,7 @@ const SoundClassifier = () => {
         data-test={isListening ? "stop-prediction-button" : "start-prediction-button"}
         className="button-28"
         type="button"
-        onClick={isListening ? stop : start}
+        onClick={isListening ? stop : () => start()}
         disabled={isBusy}
         aria-busy={isBusy}
       >

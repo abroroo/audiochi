@@ -8,7 +8,8 @@
 
 Audiochi listens through your microphone and shows what it hears:
 
-- **Scrolling spectrogram.** A 2D frequency-over-time view drawn on canvas from a 4096-point FFT.
+- **Scrolling spectrogram.** A 2D frequency-over-time view drawn on canvas from a 4096-point FFT. It uses a labelled mel-scale axis and the perceptually uniform magma colormap.
+- **No mic needed.** Any audio file can be dropped in. It is decoded and played into a `MediaStream`, so the spectrogram, classifier and teaching all run on it exactly as they do on the microphone.
 - **3D sound landscape.** A 1000 × 128 vertex terrain built with three.js. A custom GLSL shader raises and colors each vertex by loudness.
 - **Sound classification.** A 1.3M-parameter CNN that I trained on ESC-50 recognizes 50 everyday sounds live. It runs as a 1.3 MB int8 ONNX model in the browser.
 - **"I don't know that one."** Speech, music and other sounds outside the 50 classes are flagged instead of mislabelled. The detector was chosen by a small out-of-distribution study.
@@ -34,7 +35,9 @@ The analyser runs an FFT over the time-domain signal. `getByteFrequencyData` ret
 
 ### 2D spectrogram
 
-Each animation frame shifts the canvas 1px left with `drawImage` and paints one new column on the right edge. The new column comes from a single `ImageData` write. Loudness is mapped to color through a precomputed 256-entry lookup table, so building a frame needs no string allocation and no per-pixel `strokeStyle`.
+Each animation frame shifts the canvas 1px left with `drawImage` and paints one new column on the right edge. The new column comes from a single `ImageData` write.
+- **Frequency axis.** Each pixel row maps to a fractional FFT bin on a mel scale, interpolated between neighbouring bins. The 40 Hz–1 kHz range, where most pitch detail is, gets about a third of the height instead of the 6% a linear axis gives it.
+- **Color.** Loudness goes through a precomputed 256-entry magma lookup table (a polynomial fit, tested against matplotlib). Frames need no string allocation and no per-pixel `strokeStyle`.
 
 ### 3D terrain
 
@@ -99,4 +102,4 @@ Requires Node 20.9 or newer. Microphone access needs `localhost` or HTTPS.
 - [x] **Phase 0: foundations.** Leak-free audio lifecycle, error and loading states, shared mic hook, App Router only, social preview metadata, meaningful tests, dependency cleanup.
 - [x] **Phase 1: own the model.** A PyTorch pipeline on ESC-50: log-mel front end with JS parity tests, a CNN14 teacher, an ablation over augmentation and distillation, int8 ONNX, calibration and a model card.
 - [x] **Phase 2: ML features.** Teach a new sound in the browser (few-shot prototypes), a 3D embedding explorer (UMAP), occlusion saliency, and unknown-sound detection backed by an OOD study.
-- [ ] **Phase 3: visual polish.** Mel-frequency axis with labels, perceptual colormap, orbit controls and lighting in 3D, and file upload so the demo works without a microphone.
+- [x] **Phase 3: visual polish.** Mel-frequency axis with labels, perceptual (magma) colormap, orbit controls in 3D, readable layout on phones, and audio file upload so the demo works without a microphone.
