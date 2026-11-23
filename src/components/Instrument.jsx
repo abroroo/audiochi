@@ -29,7 +29,7 @@ const VIEWS = {
   spectrogram: { label: "Spectrogram", rate: WALL_STEPS_PER_SECOND, hint: "mel 40 Hz–16 kHz · newest right · cyan = pitch (YIN)" },
   ridgeline: { label: "Ridgeline", rate: 16, hint: "mel 40 Hz–12 kHz, bass left · drag to orbit · scroll to zoom" },
   galaxy: { label: "Galaxy", rate: 60, hint: "one particle stream per mel band, bass at the bottom · drag to orbit" },
-  bench: { label: "How it works", rate: 20, hint: "the pipeline as a machine: mic → mel bands → spectrogram → 50 classes" },
+  bench: { label: "Spectrograph", rate: 20, hint: "the pipeline as a machine: mic → mel bands → spectrogram → 50 classes" },
 };
 
 let modelMeta = null;

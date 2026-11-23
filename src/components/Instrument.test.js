@@ -43,7 +43,7 @@ describe("Instrument", () => {
     expect(screen.getByRole("button", { name: /audio file/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/audio file/i)).toHaveAttribute("accept", "audio/*");
     const views = screen.getAllByRole("radio").map((r) => r.textContent);
-    expect(views).toEqual(["Spectrogram", "Ridgeline", "Galaxy", "How it works"]);
+    expect(views).toEqual(["Spectrogram", "Ridgeline", "Galaxy", "Spectrograph"]);
     expect(screen.getByRole("radio", { name: "Spectrogram" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByText("Pitch")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /classifier/i })).toBeInTheDocument();

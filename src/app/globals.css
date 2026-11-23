@@ -74,11 +74,33 @@ input:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 .seg button {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 32px;
   padding: 0 12px;
   font-size: 12px;
+  white-space: nowrap;
   color: rgba(255, 255, 255, 0.6);
+}
+@media (max-width: 480px) {
+  .seg button {
+    padding: 0 6px;
+  }
+}
+/* Touch screens: 44 px targets (Fitts's law; Apple and WCAG 2.5.5 guidance). */
+@media (pointer: coarse) {
+  .btn,
+  .seg button {
+    min-height: 44px;
+  }
+  .btn--small {
+    min-height: 36px;
+  }
+  header nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 4px;
+  }
 }
 .seg button + button {
   border-left: 1px solid rgba(255, 255, 255, 0.18);
