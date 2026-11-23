@@ -29,11 +29,22 @@ const VIEWS = {
   spectrogram: { label: "Spectrogram", rate: WALL_STEPS_PER_SECOND, hint: "mel 40 Hz–16 kHz · newest right · cyan = pitch (YIN)" },
   ridgeline: { label: "Ridgeline", rate: 16, hint: "mel 40 Hz–12 kHz, bass left · drag to orbit · scroll to zoom" },
   galaxy: { label: "Galaxy", rate: 60, hint: "one particle stream per mel band, bass at the bottom · drag to orbit" },
+  bench: { label: "How it works", rate: 20, hint: "the pipeline as a machine: mic → mel bands → spectrogram → 50 classes" },
+};
+
+let modelMeta = null;
+const loadModelMeta = async () => {
+  if (!modelMeta) modelMeta = await (await fetch("/models/audiochi-esc50.json")).json();
+  return modelMeta;
 };
 
 async function createView(key, container) {
   if (key === "ridgeline") return (await import("../utility/ridgeline")).createRidgeline(container, { rows: VIEW_ROWS });
   if (key === "galaxy") return (await import("../utility/particleGalaxy")).createParticleGalaxy(container, { rows: VIEW_ROWS });
+  if (key === "bench") {
+    const [{ createBench }, meta] = await Promise.all([import("../utility/bench/bench"), loadModelMeta()]);
+    return createBench(container, { threshold: meta.unknownEnergyThreshold, labels: meta.labels });
+  }
   try {
     return (await import("../utility/spectrogramWall")).createSpectrogramWall(container);
   } catch {
@@ -242,6 +253,11 @@ const Instrument = () => {
     };
   }, [analyser, view, viewKey]);
 
+  // The bench figure shows every classifier result: the open drawer and the energy dial.
+  useEffect(() => {
+    view?.setResult?.(classifier.status === "listening" ? classifier.result : null);
+  }, [view, classifier.result, classifier.status]);
+
   // Each newly recognized sound: a marker on the spectrogram, a label in the 3D views.
   const lastEventRef = useRef(0);
   useEffect(() => {
@@ -348,7 +364,7 @@ const Instrument = () => {
                 Reset view
               </button>
             )}
-            {!live && !viewError && (
+            {!live && !viewError && viewKey !== "bench" && (
               <p className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono text-xs text-white/50">
                 no input — start the microphone, load a file, or try a sample
               </p>
