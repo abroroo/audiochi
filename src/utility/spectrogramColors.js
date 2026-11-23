@@ -1,23 +1,3 @@
-/**
- * Convert HSL (h in degrees, s and l in 0–1) to an [r, g, b] triple in 0–255.
- */
-export function hslToRgb(h, s, l) {
-  const hue = ((h % 360) + 360) % 360;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  if (hue < 60) [r, g, b] = [c, x, 0];
-  else if (hue < 120) [r, g, b] = [x, c, 0];
-  else if (hue < 180) [r, g, b] = [0, c, x];
-  else if (hue < 240) [r, g, b] = [0, x, c];
-  else if (hue < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
-}
-
 // Polynomial fit of matplotlib's "magma" colormap (perceptually uniform, readable in greyscale and
 // by most colour-blind viewers). Coefficients from https://www.shadertoy.com/view/WlfXRN (CC0).
 const MAGMA = [
@@ -40,8 +20,8 @@ export function magma(t) {
   });
 }
 
-// Silence starts a little into the map (deep violet, close to the page background) instead of black.
-const MAGMA_START = 0.1;
+// Silence is near-black (just into the map), so quiet regions blend with the page and sound stands out.
+const MAGMA_START = 0.03;
 
 /**
  * 256-entry lookup table mapping an analyser byte (0–255 loudness) to RGB with the magma colormap:
@@ -61,12 +41,6 @@ export function buildLoudnessLut() {
 export const hzToMel = (f) => 2595 * Math.log10(1 + f / 700);
 export const melToHz = (m) => 700 * (10 ** (m / 2595) - 1);
 export const AXIS_RANGE = { fMin: 40, fMax: 16000 };
-
-/** Vertical position (0 = top) of frequency `f` on a mel axis spanning fMin..fMax. */
-export function freqToY(f, height, { fMin, fMax } = AXIS_RANGE) {
-  const t = (hzToMel(f) - hzToMel(fMin)) / (hzToMel(fMax) - hzToMel(fMin));
-  return (1 - t) * height;
-}
 
 /**
  * For each pixel row (top to bottom), the fractional FFT bin it shows on a mel axis.
@@ -96,34 +70,4 @@ export function fillRow(out, frequencyData, rowMap) {
     out[j] = frequencyData[lo] + (frequencyData[hi] - frequencyData[lo]) * (pos - lo);
   }
   return out;
-}
-
-/**
- * Fill a 1-pixel-wide RGBA column from frequency data, low frequencies at the bottom.
- *
- * @param {Uint8Array} frequencyData analyser.getByteFrequencyData output
- * @param {Uint8ClampedArray} column RGBA buffer of length height * 4
- * @param {Uint8ClampedArray} lut table from buildLoudnessLut()
- * @param {Float32Array} [rowMap] from buildRowMap(); linear frequency axis when omitted
- */
-export function paintColumn(frequencyData, column, lut, rowMap) {
-  const height = column.length / 4;
-  const bins = frequencyData.length;
-  for (let y = 0; y < height; y++) {
-    let v;
-    if (rowMap) {
-      // Linear interpolation between neighbouring bins avoids blocky low-frequency rows.
-      const pos = rowMap[y];
-      const lo = Math.floor(pos);
-      const hi = Math.min(bins - 1, lo + 1);
-      v = Math.round(frequencyData[lo] + (frequencyData[hi] - frequencyData[lo]) * (pos - lo));
-    } else {
-      v = frequencyData[Math.min(bins - 1, Math.floor(((height - 1 - y) / height) * bins))];
-    }
-    const o = y * 4;
-    column[o] = lut[v * 3];
-    column[o + 1] = lut[v * 3 + 1];
-    column[o + 2] = lut[v * 3 + 2];
-    column[o + 3] = 255;
-  }
 }

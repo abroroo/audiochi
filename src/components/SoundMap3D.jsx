@@ -73,14 +73,14 @@ const SoundMap3D = () => {
 
       <header className="pointer-events-none absolute inset-x-0 top-0 flex flex-col items-center gap-2 px-4 pt-6 text-center">
         <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-3">
-          <h1 className="text-lg font-semibold">Sound map</h1>
-          <Link href="/" className="button-28 button-28--small">Back &#10548;</Link>
+          <Link href="/" className="btn btn--small">← audiochi</Link>
+          <h1 className="text-sm font-semibold">Embedding map</h1>
         </div>
-        <p className="max-w-xl text-xs opacity-80">
+        <p className="max-w-xl text-xs text-white/60">
           Each dot is one of the 2,000 ESC-50 clips, placed by how the model hears it (its 256-d embedding,
           reduced to 3D with UMAP). Similar sounds cluster. Turn on the mic to see where your sound lands. Drag to orbit, tap or hover a dot to name it.
         </p>
-        <button type="button" className="button-28 pointer-events-auto" onClick={isListening ? stop : start}
+        <button type="button" className="btn btn--primary pointer-events-auto" onClick={isListening ? stop : start}
           disabled={status === "loading" || !space} data-test="sound-map-toggle">
           {status === "loading" ? "Loading model…" : isListening ? "Stop listening" : "Place my sound"}
         </button>
@@ -99,7 +99,7 @@ const SoundMap3D = () => {
       )}
 
       {space && (
-        <ul className="absolute bottom-4 left-4 grid gap-1 text-xs" aria-label="Legend">
+        <ul className="absolute bottom-4 left-4 grid gap-1 font-mono text-[11px] text-white/70" aria-label="Legend">
           {space.categories.map((c, i) => (
             <li key={c} className="flex items-center gap-2">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: CATEGORY_COLORS[i] }} />

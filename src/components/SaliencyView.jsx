@@ -55,16 +55,16 @@ const SaliencyView = ({ explanation }) => {
     <figure className="mt-4" data-test="saliency-view">
       <canvas
         ref={canvasRef}
-        className="h-32 w-full rounded border border-white/20 [image-rendering:pixelated]"
+        className="h-32 w-full border border-white/15 [image-rendering:pixelated]"
         role="img"
         aria-label={`Spectrogram with the regions the model relied on to hear ${label} highlighted`}
       />
-      <figcaption className="mt-1 flex flex-wrap justify-between gap-x-3 text-left text-xs opacity-70">
+      <figcaption className="mt-1 flex flex-wrap justify-between gap-x-3 text-left text-[11px] text-white/50">
         <span>
-          Snapshot when you clicked. Bright = what the model used to hear{" "}
+          Occlusion saliency at click time. Bright = regions the model used for{" "}
           <span className="capitalize">{label}</span>
         </span>
-        <span className="whitespace-nowrap tabular-nums">{cells.length} masked runs · {ms.toFixed(0)} ms</span>
+        <span className="whitespace-nowrap font-mono tabular-nums">{cells.length} masked runs · {ms.toFixed(0)} ms</span>
       </figcaption>
     </figure>
   );

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
-const BACKGROUND = 0x220033;
+const BACKGROUND = 0x07060c;
 const SCALE = 10; // UMAP coordinates are normalized to [-1, 1]
 const TRAIL = 40;
 import { CATEGORY_COLORS } from "./categories";

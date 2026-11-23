@@ -14,11 +14,3 @@ vec3 magma(float t) {
   return clamp(c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6))))), 0.0, 1.0);
 }
 `;
-
-// Anti-aliased grid line intensity (0..1) for coordinates `p` with line spacing `step`.
-export const GRID_GLSL = /* glsl */ `
-float gridLine(vec2 p, vec2 step) {
-  vec2 g = abs(fract(p / step - 0.5) - 0.5) / fwidth(p / step);
-  return 1.0 - min(min(g.x, g.y), 1.0);
-}
-`;

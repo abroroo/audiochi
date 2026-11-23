@@ -4,7 +4,9 @@ import { MAGMA_GLSL } from "./glsl";
 import { createBloom, disposeSprite, labelSprite } from "./sceneKit";
 
 const COUNT = 24000;
-const BACKGROUND = 0x07020f;
+const BACKGROUND = 0x07060c;
+const LABEL_Y = -2.6; // just under the core, clear of the page header
+const LABEL_HOLD = 5; // seconds a label stays fully visible
 
 const vertexShader = /* glsl */ `
 attribute vec3 aDir;
@@ -55,11 +57,12 @@ void main() {
  * sets its speed, reach, size and brightness. The palette shifts toward the colour of the last
  * recognized sound category.
  *
- * @returns {{ update(row: Uint8Array): void, addLabel(text: string, color?: string): void, clear(): void, resetView(): void, dispose(): void }}
+ * @returns {{ kind: "rows", update(row: Uint8Array): void, addLabel(text: string, color?: string): void, clear(): void, resetView(): void, dispose(): void }}
  */
 export function createParticleGalaxy(container, { rows }) {
   const renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.domElement.style.display = "block";
   container.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(BACKGROUND);
@@ -123,15 +126,19 @@ export function createParticleGalaxy(container, { rows }) {
 
   const post = createBloom(renderer, scene, camera, { strength: 0.65, radius: 0.45, threshold: 0.32 });
   const resize = () => {
-    const w = container.clientWidth || window.innerWidth;
-    const h = container.clientHeight || window.innerHeight;
+    const w = container.clientWidth || 1;
+    const h = container.clientHeight || 1;
     renderer.setSize(w, h);
     post.setSize(w, h);
-    camera.aspect = w / Math.max(1, h);
+    camera.aspect = w / h;
+    // Portrait screens: widen the view so the cloud isn't cropped at the sides.
+    const minHfov = THREE.MathUtils.degToRad(70);
+    camera.fov = Math.max(55, THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(minHfov / 2) / camera.aspect)));
     camera.updateProjectionMatrix();
   };
   resize();
-  window.addEventListener("resize", resize);
+  const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+  observer?.observe(container);
 
   const smoothed = new Float32Array(rows);
   let lastUpdate = performance.now();
@@ -147,18 +154,19 @@ export function createParticleGalaxy(container, { rows }) {
     core.scale.setScalar(0.35 + bass * 0.5);
     if (label) {
       const age = clock.getElapsedTime() - label.userData.born;
-      label.material.opacity = Math.min(1, age * 2) * Math.max(0, 1 - (age - 2) / 1);
-      label.position.y = 2.4 + age * 0.25;
-      if (age > 3) {
-        scene.remove(label);
+      label.material.opacity = Math.min(1, age * 2) * Math.max(0, 1 - (age - LABEL_HOLD) / 1.5);
+      label.position.y = LABEL_Y + age * 0.08;
+      if (age > LABEL_HOLD + 1.5) {
+        post.overlay.remove(label);
         disposeSprite(label);
         label = null;
       }
     }
-    post.composer.render();
+    post.render();
   });
 
   return {
+    kind: "rows",
     update(row) {
       const now = performance.now();
       const dt = Math.min(0.1, (now - lastUpdate) / 1000);
@@ -177,14 +185,16 @@ export function createParticleGalaxy(container, { rows }) {
     addLabel(text, color) {
       if (color) accentTarget.set(color);
       if (label) {
-        scene.remove(label);
+        post.overlay.remove(label);
         disposeSprite(label);
       }
+      // Drawn after the bloom, above the cloud, so the glow can't wash the text out.
       label = labelSprite(text, color);
       label.material.opacity = 0;
       label.userData.born = clock.getElapsedTime();
-      label.position.set(0, 2.4, 0);
-      scene.add(label);
+      label.position.set(0, LABEL_Y, 0);
+      label.scale.multiplyScalar(1.3);
+      post.overlay.add(label);
     },
     clear() {
       smoothed.fill(0);
@@ -197,7 +207,7 @@ export function createParticleGalaxy(container, { rows }) {
     },
     dispose() {
       renderer.setAnimationLoop(null);
-      window.removeEventListener("resize", resize);
+      observer?.disconnect();
       controls.dispose();
       if (label) disposeSprite(label);
       geometry.dispose();

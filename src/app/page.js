@@ -1,5 +1,5 @@
-import Spectrogram from "../components/Spectrogram";
+import Instrument from "../components/Instrument";
 
 export default function Home() {
-  return <Spectrogram />;
+  return <Instrument />;
 }

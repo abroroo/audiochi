@@ -35,7 +35,10 @@ export function disposeSprite(sprite) {
 
 /**
  * Bloom post-processing chain: render, glow on bright pixels, output.
- * @returns {{ composer: EffectComposer, bloom: UnrealBloomPass, setSize(w: number, h: number): void, dispose(): void }}
+ * `overlay` is a second scene drawn on top after the bloom, for text that must stay crisp and
+ * readable instead of being washed out by the glow or hidden behind geometry.
+ * @returns {{ composer: EffectComposer, bloom: UnrealBloomPass, overlay: THREE.Scene, render(): void,
+ *             setSize(w: number, h: number): void, dispose(): void }}
  */
 export function createBloom(renderer, scene, camera, { strength = 0.8, radius = 0.45, threshold = 0.5 } = {}) {
   const composer = new EffectComposer(renderer);
@@ -43,9 +46,20 @@ export function createBloom(renderer, scene, camera, { strength = 0.8, radius = 
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), strength, radius, threshold);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  const overlay = new THREE.Scene();
   return {
     composer,
     bloom,
+    overlay,
+    render() {
+      composer.render();
+      if (overlay.children.length === 0) return;
+      const autoClear = renderer.autoClear;
+      renderer.autoClear = false;
+      renderer.clearDepth();
+      renderer.render(overlay, camera);
+      renderer.autoClear = autoClear;
+    },
     setSize(w, h) {
       composer.setSize(w, h);
       bloom.resolution.set(w / 2, h / 2); // half resolution: the glow is blurry anyway

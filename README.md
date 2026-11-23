@@ -1,57 +1,45 @@
 # Audiochi
 
-**Real-time sound recognition and visualization, running entirely in the browser.**
+**A real-time audio analysis instrument that runs entirely in the browser: spectrogram, pitch, 3D views and a sound classifier I trained myself.**
 
-[Live demo →](https://audiochi.vercel.app) · [3D view →](https://audiochi.vercel.app/viewIn3D) · [Sound map →](https://audiochi.vercel.app/explore)
+[Live demo →](https://audiochi.vercel.app) · [Embedding map →](https://audiochi.vercel.app/explore)
 
 ![Audiochi live spectrogram](public/images/og_image.jpg)
 
-Audiochi listens through your microphone and shows what it hears:
+One screen, one input (microphone or an audio file), three views of the same signal, live readouts and the classifier:
 
-- **Spectrogram wall.** The live spectrogram as a glowing wall in perspective that leans with the pointer. It is a WebGL ring-buffer texture, so nothing is copied as it scrolls, with a mel axis in Hz on one side and musical notes on the other, in the magma colormap. A 2D canvas takes over if WebGL is missing.
-- **Pitch tracker.** YIN pitch detection (with parabolic interpolation and a median filter) draws a cyan trace of what you whistle or hum and names the note: "A4 +3¢".
-- **Sound orb.** A noise-displaced sphere that ripples with 64 mel bands, swells with the bass and glows in the colour of the sound category the model last recognized.
-- **No mic needed.** Any audio file can be dropped in. It is decoded and played into a `MediaStream`, so the spectrogram, classifier and teaching all run on it exactly as they do on the microphone.
-- **Four 3D views**, each its own lazily loaded module: tunnel, particle galaxy, ridgeline waves and terrain. Recognized sounds appear in all of them.
-- **Sound tunnel.** The spectrogram wrapped into a tunnel you fly through: time streams toward you, pitch runs around the wall, and loud sounds push in and glow (GLSL + bloom post-processing). Sounds the model recognizes float past as labels.
-- **Particle galaxy.** 24,000 GPU particles stream from a core. Each belongs to a frequency band, and that band's loudness drives a CPU-integrated phase, so particles speed up without jumping. The palette follows the recognized sound category.
-- **Ridgeline waves.** One glowing line per moment of spectrum, receding into the distance. A background-coloured fill under each line hides the lines behind it, and labels are pinned above peaks.
-- **3D terrain.** A lit, mel-scaled landscape with bloom and orbit controls. Recognized sounds are planted as flags where they were heard and scroll back in time.
+- **Flat spectrogram.** A WebGL ring-buffer texture (nothing is copied as it scrolls) drawn edge to edge on a mel axis, 40 Hz–16 kHz, in the magma colormap. Hz ticks, note ticks and a seconds-ago scale are drawn from the same geometry as the texture (`src/utility/axes.js`, unit-tested), so they sit exactly on the data. Recognized sounds appear as markers that scroll with it. A 2D canvas with identical geometry takes over if WebGL is missing.
+- **Pitch tracker.** YIN pitch detection (parabolic interpolation, median filter) draws a cyan trace on the spectrogram and feeds the readout: "440.0 Hz · A4 +3¢".
+- **Ridgeline.** One glowing line per moment of spectrum with a magma gradient fill below it; the fills are opaque, so nearer ridges hide farther ones. It is a 3D object: orbit, zoom, reset.
+- **Particle galaxy.** 24,000 GPU particles stream from a core. Each belongs to a mel band, and that band's loudness drives a CPU-integrated phase, so particles speed up without jumping. Orbitable.
+- **Readouts.** Pitch, note, level (dBFS), top class, confidence, the open-set energy score, inference time and frame rate, in one monospace strip.
+- **No mic needed.** Any audio file can be loaded. It is decoded and played into a `MediaStream`, so every view and the classifier run on it exactly as they do on the microphone.
 - **Sound classification.** A 1.3M-parameter CNN that I trained on ESC-50 recognizes 50 everyday sounds live. It runs as a 1.3 MB int8 ONNX model in the browser.
 - **"I don't know that one."** Speech, music and other sounds outside the 50 classes are flagged instead of mislabelled. The detector was chosen by a small out-of-distribution study.
 - **Teach it a new sound.** Record a sound 3–5 times and it is recognized from then on. This is few-shot learning in the model's embedding space, with no retraining and no upload.
 - **What did it listen to?** An occlusion-saliency heatmap over the spectrogram shows which time and frequency regions drove the prediction.
-- **Sound map.** A 3D UMAP galaxy of all 2,000 training clips as the model sees them, with your live sound moving through it.
+- **Embedding map** (`/explore`). A 3D UMAP of all 2,000 training clips as the model sees them, with your live sound moving through it.
 
 No audio leaves the device. All processing runs client-side with the Web Audio API, WebGL and onnxruntime-web.
 
 ## How it works
 
 ```
-Microphone ─► getUserMedia ─► AudioContext ─► AnalyserNode (FFT) ─┬─► 2D canvas spectrogram
-                                                                  └─► three.js terrain (GLSL)
-Microphone ─► AudioWorklet PCM ─► 16 kHz resampler ─► log-mel (JS) ─► int8 ONNX CNN ─► calibrated probabilities
+                             ┌─► AnalyserNode (FFT 4096) ─► mel rows ─► spectrogram / ridgeline / galaxy
+mic or file ─► MediaStream ──┤                           └─► YIN pitch, dBFS level ─► readouts
+                             └─► AudioWorklet PCM ─► 16 kHz resampler ─► log-mel (JS) ─► int8 ONNX CNN ─► probabilities, energy score
 ```
 
 ### Audio pipeline
 
-`useMicAnalyser` (`src/hooks/useMicAnalyser.js`) owns the full lifecycle: microphone stream, `AudioContext` and `AnalyserNode`. Everything is held in refs and released on stop or unmount. A getUserMedia promise that resolves after the user already pressed Stop is detected and discarded, so the microphone indicator never gets stuck on. Permission errors are mapped to messages the user can act on.
+`useAudioSource` (`src/hooks/useAudioSource.js`) owns the single input: one `getUserMedia` stream (browser AGC, noise suppression and echo cancellation off) or a decoded file played into a `MediaStream`. The visual analyser (`useMicAnalyser`) and the classifier (`useLiveClassifier`) both read that stream, so there is one permission prompt and one stop button. Everything that needs tearing down lives in refs; a permission prompt that resolves after Stop is detected and discarded, so the mic indicator never sticks. Errors are mapped to messages the user can act on.
 
-The analyser runs an FFT over the time-domain signal. `getByteFrequencyData` returns `fftSize / 2` bins of loudness (0–255).
+### Views
 
-### 2D spectrogram
-
-Each animation frame shifts the canvas 1px left with `drawImage` and paints one new column on the right edge. The new column comes from a single `ImageData` write.
-- **Frequency axis.** Each pixel row maps to a fractional FFT bin on a mel scale, interpolated between neighbouring bins. The 40 Hz–1 kHz range, where most pitch detail is, gets about a third of the height instead of the 6% a linear axis gives it.
-- **Color.** Loudness goes through a precomputed 256-entry magma lookup table (a polynomial fit, tested against matplotlib). Frames need no string allocation and no per-pixel `strokeStyle`.
-
-### Sound tunnel
-
-`src/utility/soundTunnel.js` builds a 270-ring × 160-segment tube. Its vertex positions are computed entirely in the vertex shader from (ring, angle) and a per-vertex loudness byte. Frequency is mirrored around each ring (`tunnelMath.js`), so there is no seam: bass is on the floor and highs on the ceiling. Each step the loudness buffer scrolls one ring with `copyWithin`, and between steps the whole tube slides by the step clock's fractional progress, so motion stays smooth at any frame rate. Lighting uses screen-space derivative normals, and only loud sound is emissive, so `UnrealBloomPass` picks out the peaks. Classifier events become canvas-texture sprites that travel with the flow.
-
-### 3D terrain
-
-`src/utility/spectrogram3d.js` builds an indexed `BufferGeometry` with log-like spacing on the frequency axis. Each frame, the displacement buffer scrolls one time step with `copyWithin`, the newest spectrum is written into the last row, and only `needsUpdate` is flagged, so nothing is reallocated. The vertex shader (`src/utility/vertexshader.js`) displaces vertices along their normals and colors them from a 256-entry magma-style table. The view owns its renderer and frees the WebGL context on unmount.
+Each view is its own lazily loaded module with the same small interface, and owns its renderer, freeing the WebGL context when you switch.
+- **Fixed rate, any refresh rate.** A step clock (`frameClock.js`) turns animation frames into a fixed number of steps per second, so the spectrogram scrolls at exactly 60 columns/s on 60, 120 Hz or throttled displays. The 3D views also slide by the fractional step between frames.
+- **Mel rows.** FFT bins are interpolated onto mel rows. 40 Hz–1 kHz gets about a third of the height instead of the 6% a linear axis gives it.
+- **Labels stay readable.** 3D labels are drawn in an overlay scene after the bloom pass, so the glow never washes them out and geometry never hides them.
 
 ### Sound classification: my own model, end to end
 
@@ -113,3 +101,4 @@ Requires Node 20.9 or newer. Microphone access needs `localhost` or HTTPS.
 - [x] **Phase 1: own the model.** A PyTorch pipeline on ESC-50: log-mel front end with JS parity tests, a CNN14 teacher, an ablation over augmentation and distillation, int8 ONNX, calibration and a model card.
 - [x] **Phase 2: ML features.** Teach a new sound in the browser (few-shot prototypes), a 3D embedding explorer (UMAP), occlusion saliency, and unknown-sound detection backed by an OOD study.
 - [x] **Phase 3: visual polish.** Mel-frequency axis with labels, perceptual (magma) colormap, orbit controls in 3D, readable layout on phones, and audio file upload so the demo works without a microphone.
+- [x] **Phase 4: one instrument.** The 2D and 3D pages merged into one screen with a single input, a view switcher, numeric readouts and the classifier panel.

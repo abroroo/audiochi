@@ -1,12 +1,13 @@
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 const SITE_URL = "https://audiochi.vercel.app";
-const TITLE = "Audiochi: Real-time Sound Recognition in the Browser";
+const TITLE = "Audiochi: real-time audio analysis in the browser";
 const DESCRIPTION =
-  "Live spectrogram, 3D sound landscape and a sound classifier I trained myself, all running on-device in your browser.";
+  "Live spectrogram, pitch tracking, 3D views and a sound classifier I trained myself, all running on-device in the browser.";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,13 +30,13 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#220033",
+  themeColor: "#07060c",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={`${inter.variable} ${mono.variable}`}>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }
