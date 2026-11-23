@@ -13,7 +13,7 @@ One screen, one input (microphone or an audio file), three views of the same sig
 - **Ridgeline.** One glowing line per moment of spectrum with a magma gradient fill below it; the fills are opaque, so nearer ridges hide farther ones. It is a 3D object: orbit, zoom, reset.
 - **Particle galaxy.** 24,000 GPU particles stream from a core. Each belongs to a mel band, and that band's loudness drives a CPU-integrated phase, so particles speed up without jumping. Orbitable.
 - **Readouts.** Pitch, note, level (dBFS), top class, confidence, the open-set energy score, inference time and frame rate, in one monospace strip.
-- **No mic needed.** Any audio file can be loaded. It is decoded and played into a `MediaStream`, so every view and the classifier run on it exactly as they do on the microphone.
+- **No mic needed.** Built-in samples (dog, rooster, siren and rain clips from ESC-50, CC BY-NC; two music tracks by Luna Cantina and Quincas Moreira that show the "unknown" path), or load any audio file. It is decoded and played into a `MediaStream`, so every view and the classifier run on it exactly as they do on the microphone.
 - **Sound classification.** A 1.3M-parameter CNN that I trained on ESC-50 recognizes 50 everyday sounds live. It runs as a 1.3 MB int8 ONNX model in the browser.
 - **"I don't know that one."** Speech, music and other sounds outside the 50 classes are flagged instead of mislabelled. The detector was chosen by a small out-of-distribution study.
 - **Teach it a new sound.** Record a sound 3–5 times and it is recognized from then on. This is few-shot learning in the model's embedding space, with no retraining and no upload.
@@ -100,5 +100,5 @@ Requires Node 20.9 or newer. Microphone access needs `localhost` or HTTPS.
 - [x] **Phase 0: foundations.** Leak-free audio lifecycle, error and loading states, shared mic hook, App Router only, social preview metadata, meaningful tests, dependency cleanup.
 - [x] **Phase 1: own the model.** A PyTorch pipeline on ESC-50: log-mel front end with JS parity tests, a CNN14 teacher, an ablation over augmentation and distillation, int8 ONNX, calibration and a model card.
 - [x] **Phase 2: ML features.** Teach a new sound in the browser (few-shot prototypes), a 3D embedding explorer (UMAP), occlusion saliency, and unknown-sound detection backed by an OOD study.
-- [x] **Phase 3: visual polish.** Mel-frequency axis with labels, perceptual (magma) colormap, orbit controls in 3D, readable layout on phones, and audio file upload so the demo works without a microphone.
+- [x] **Phase 3: visual polish.** Mel-frequency axis with labels, perceptual (magma) colormap, orbit controls in 3D, readable layout on phones, and audio file upload so the demo works without a microphone, plus built-in samples.
 - [x] **Phase 4: one instrument.** The 2D and 3D pages merged into one screen with a single input, a view switcher, numeric readouts and the classifier panel.

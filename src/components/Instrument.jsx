@@ -15,6 +15,7 @@ import {
   smoothRow, timeTicks, viewRowMap, wallRowForFreq, wallRowMap, wallTopFraction,
 } from "../utility/axes";
 import SoundClassifier from "./SoundClassifier";
+import SampleMenu from "./SampleMenu";
 
 // 2048 bins: fine low-frequency detail for the mel rows. No frame smoothing, so onsets stay sharp.
 const ANALYSER_OPTIONS = { fftSize: 4096, smoothingTimeConstant: 0 };
@@ -115,6 +116,7 @@ function Readout({ label, value, accent, title }) {
 const Instrument = () => {
   const stageRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [sampleError, setSampleError] = useState(null);
   const [viewKey, setViewKey] = useState("spectrogram");
   const [view, setView] = useState(null);
   const [viewError, setViewError] = useState(null);
@@ -269,7 +271,7 @@ const Instrument = () => {
     className = result.taughtMatch?.name ?? (result.speech ? "speech?" : result.unknown ? "unknown" : classifier.labels[result.top]);
   }
   const confidence = audible ? (result.taughtMatch ? result.taughtMatch.sim : result.probs[result.top]) : null;
-  const errors = [input.error, analyserState.error, viewError].filter(Boolean);
+  const errors = [sampleError, input.error, analyserState.error, viewError].filter(Boolean);
 
   return (
     <div className="flex min-h-dvh flex-col text-[#e9e6f0] lg:h-dvh">
@@ -308,6 +310,15 @@ const Instrument = () => {
             >
               {fileOn ? "Stop file" : "Audio file"}
             </button>
+            {!fileOn && (
+              <SampleMenu
+                onPick={(f) => {
+                  setSampleError(null);
+                  input.startFile(f);
+                }}
+                onError={setSampleError}
+              />
+            )}
             <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={onFile} data-test="file-input" aria-label="Audio file" />
             <div role="radiogroup" aria-label="View" className="seg w-full sm:ml-auto sm:w-auto">
               {Object.entries(VIEWS).map(([key, v]) => (
@@ -339,7 +350,7 @@ const Instrument = () => {
             )}
             {!live && !viewError && (
               <p className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-mono text-xs text-white/50">
-                no input — start the microphone or load an audio file
+                no input — start the microphone, load a file, or try a sample
               </p>
             )}
             {errors.length > 0 && (
